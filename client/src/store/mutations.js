@@ -11,5 +11,7 @@ const mutations={
     setLastClass:(state,lastClass)=>(state.lastClass=lastClass),
     //设置选中类包含的点
     setContainNodes:(state,ids)=>(state.containNodes=ids),
+    //设置力导图展示类型
+    setForceType:(state,type)=>(state.forceType=type),
 };
 export default mutations;

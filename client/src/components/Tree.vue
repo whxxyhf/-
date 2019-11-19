@@ -30,7 +30,7 @@ export default {
         return {
             circle_Fill:this.$d3.interpolateBlues,
             circle_R:3,
-            circle_Stroke:"steelblue",
+            circle_Stroke:"red",
             circle_Stroke_Choose:"orange",
             circle_Stroke_Width:0.5,
             line_Stroke_Width:1,
@@ -300,7 +300,7 @@ export default {
     width:100%;
     height:15%;
     box-sizing: border-box;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid #409EFF;
     padding: 0px 5px;
 }
 
@@ -314,6 +314,6 @@ export default {
     width:100%;
     height:65%;
     box-sizing: border-box;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid #409EFF;
 }
 </style>

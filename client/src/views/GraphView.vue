@@ -10,7 +10,7 @@
             </Panel>
             
             <!-- 分割树图 -->
-            <Panel :title="'Control Panel'" :panelHeight="'50%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;">
+            <Panel :title="'Tree View'" :panelHeight="'50%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;">
                 <Tree :tree="tree" :chooseNode="getClassNames" slot="panelBody"/>
             </Panel>
             
@@ -19,15 +19,19 @@
         <!--middle盒子-->
         <div class="middle">
             <!-- 聚类力导图 -->
-            <Panel :title="'Control Panel'" :panelHeight="'100%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;" >
+            <Panel :title="'Node-Link View'" :panelHeight="'100%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;" >
                 <ForceClass slot="panelBody"/>
+                <select v-model="forceType" @change="chooseForceType" slot="title" style="float:right">
+                    <option value="flower">Flower</option>
+                    <option value="pie">Pie</option>
+                </select>
             </Panel>
         </div>
 
         <!-- right盒子 -->
         <div class="right">
             <!-- 散点图 -->
-            <Panel :title="'Control Panel'" :panelHeight="'50%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;" ref="tsnePanel">
+            <Panel :title="'Projection View'" :panelHeight="'50%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;" ref="tsnePanel">
                 <Tsne :nodes="getTsne" :chooseClass="getClassNames" slot="panelBody"/>
                 <select v-model="walkMethod" @change="chooseWalkMethod" slot="title" style="float:right">
                     <option value="deepwalk">DW</option>
@@ -37,7 +41,7 @@
             </Panel>
 
             <!-- 平行坐标图 -->
-            <Panel :title="'Control Panel'" :panelHeight="'50%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;">
+            <Panel :title="'Parallel View'" :panelHeight="'50%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;">
                 <Parallel slot="panelBody"/>
             </Panel>
         </div>
@@ -67,6 +71,7 @@ export default {
         return {
             titleHeight:this.$store.state.titleHeight,
             walkMethod:"deepwalk",
+            forceType:'flower',
             nodes:{},//储存原始网络力导图点坐标数据
             links:[],//储存原始网络力链接数据
             tree:[],//储存树图数据
@@ -114,7 +119,7 @@ export default {
             })
             .then((res)=>{
                 let names=[];
-                this.getChildren(res.data,0,3,names);
+                this.getChildren(res.data,0,4,names);
                 this.updateClassNames(names);
                 this.tree=res.data;
             })
@@ -136,6 +141,9 @@ export default {
         //选择游走方式
         chooseWalkMethod(){
             this.$store.dispatch("updateType",this.walkMethod);
+        },
+        chooseForceType(){
+            this.$store.dispatch("updateForceType",this.forceType);
         }
     },
     mounted(){

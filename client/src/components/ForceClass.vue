@@ -12,24 +12,38 @@ export default {
     name:"ForceClass",
     data(){
         return {
+            circle_Stroke_Width:1,
+            circle_Stroke:'white',
             path_Fill:"none",
             path_Stroke:"#ccc",
             path_Stroke_Width_Max:7,//连线宽度最大值
             path_Stroke_Width_Min:.5,//连线宽度最小值
             pt_Length_max:40,//花瓣最长半径
-            pt_Length_min:15,//花瓣最短半径
+            pt_Length_min:18,//花瓣最短半径
             radius_max:7,//花心最大半径
-            radius_min:4,//花心最小半径
+            radius_min:3,//花心最小半径
             path_Opacity_Max:.7,//连线不透明度最大值
             path_Opacity_Min:.1,//连线不透明度最小值
+            pt_Stroke:'white',
+            pt_Stroke_Width:1,
             color:["#FF3030","#FF00FF","#C0FF3E","#87CEFA","#FFC0CB"],
             interpolateColor:this.$d3.interpolateBlues,
             colorBarWidth:100,
             colorBarHeight:20,
+            addLength:5,//花瓣外环比最长花瓣多出的长度
+            pt_Circle_Stroke:"#ccc",//花瓣外环默认颜色
+            pt_Circle_Stroke_Choosed:"red",//花瓣外环选中颜色
+            pt_Circle_Stroke_Width:2,
+            //饼图的一些属性
+            pie_R_Max:30,
+            pie_R_Min:10,
+            pie_Circle_Stroke:"#ccc",
+            pie_Circle_Stroke_Choosed:"red",
+            pie_Circle_Stroke_Width:2,
         }
     },
     computed:{
-        ...mapGetters(['getClassNames','getLabel','getType','getLastClass']),
+        ...mapGetters(['getClassNames','getLabel','getType','getLastClass','getForceType']),
     },
     methods:{
         //画图
@@ -61,6 +75,8 @@ export default {
             let r_max=this.$d3.max(this.getClassNames,d=>d.num);
             let r_min=this.$d3.min(this.getClassNames,d=>d.num);
             let r_scale=this.$d3.scaleLinear().domain([r_min,r_max]).range([this.radius_min,this.radius_max]);
+            //饼图半径比例尺
+            let pie_r_scale=this.$d3.scaleLinear().domain([r_min,r_max]).range([this.pie_R_Min,this.pie_R_Max]);
             //点颜色比例尺（映射midu属性）
             let c_max=this.$d3.max(this.getClassNames,d=>d.midu);
             let c_min=this.$d3.min(this.getClassNames,d=>d.midu);
@@ -116,30 +132,80 @@ export default {
                         .x(d=>d[0])
                         .y(d=>d[1])
                         .curve(this.$d3.curveBasis);
+            // 饼图布局
+            let pie = this.$d3.pie();
+            let innerRadius = 0;    // 内半径
             for(let i=0;i<nodes.length;i++){
                 let g=node.append("g").attr("class","flowerG"+nodes[i].id).attr("transform",`translate(0,0)`).attr("opacity",1);
+                //花瓣外环
+                let maxLengthPt=this.$d3.max(classDic[nodes[i].id].shang,d=>l_scale(d))/1.5+this.addLength;//花瓣外环半径
+                g.append('circle').attr("cx",x_scale(nodes[i].x))
+                .attr("cy",y_scale(nodes[i].y)).attr('fill',"white").attr("r",maxLengthPt)
+                .attr("stroke-width",this.pt_Circle_Stroke_Width).attr("stroke",this.pt_Circle_Stroke)
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 1;else if(this.getForceType=="pie") return 0})
+                .attr("id","flowerPtCircle"+nodes[i].id)
+                .attr("class","flower")
+                //花瓣
                 let pointsArr=this.getPetal(nodes[i],x_scale,y_scale,l_scale);
                 g.selectAll("path").data(pointsArr).enter()
                 .append("path")
                 .attr("d",d=>linePt(d))
                 .attr("fill",(d,i)=>this.color[i])
-                .attr("stroke-width",this.path_Stroke_Width)
-                .attr("stroke",this.path_Stroke)
-                .attr("class",()=>"flowerPts"+nodes[i].id)
+                .attr("stroke-width",this.pt_Stroke_Width)
+                .attr("stroke",this.pt_Stroke)
+                .attr("id",()=>"flowerPts"+nodes[i].id)
+                .attr("class","flower")
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 1;else if(this.getForceType=="pie") return 0})
                 .on("click",()=>{
                     //选中该类，更新store.containNodes
                     this.$store.dispatch('updateContainNodes',classDic[nodes[i].id].ids);
                 })
                 // .call(this.$d3.drag()
                 //     .on("drag",draged.bind(this,nodes[i].id)))
+
+                //饼图
+                //弧线生成器
+                let outerRadius=pie_r_scale(classDic[nodes[i].id].num);
+                //饼图外环
+                let maxLengthPie=outerRadius+this.addLength;//饼图外环半径
+                g.append('circle').attr("cx",x_scale(nodes[i].x))
+                .attr("cy",y_scale(nodes[i].y)).attr('fill',"white").attr("r",maxLengthPie)
+                .attr("stroke-width",this.pie_Circle_Stroke_Width).attr("stroke",this.pie_Circle_Stroke)
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 0;else if(this.getForceType=="pie") return 1})
+                .attr("id","pieCircle"+nodes[i].id)
+                .attr("class","pie")
+                let arc_generator = this.$d3.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius);
+                let gs = g.selectAll('g')
+                .data(pie(classDic[nodes[i].id].shang))
+                .enter()
+                .append('g')
+                .attr("id",(d,j)=>"pie"+j+"_"+nodes[i].id)
+                .attr("class","pie")
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 0;else if(this.getForceType=="pie") return 1})
+                .attr('transform', `translate(${x_scale(nodes[i].x)},${y_scale(nodes[i].y)})`)
+
+                // 绘制扇形
+                gs.append('path')
+                .attr('d', function (d) {
+                    return arc_generator(d);
+                })
+                .attr('fill', (d,i)=> {
+                    return this.color[i];   // 设置颜色
+                })
+
+                //花心
                 g.append("circle")
                 .attr("cx",x_scale(nodes[i].x))
                 .attr("cy",y_scale(nodes[i].y))
                 .attr("r",r_scale(classDic[nodes[i].id].num))
                 .attr("fill",this.interpolateColor(c_scale(classDic[nodes[i].id].midu)))
-                .attr("stroke","steelblue")
-                .attr("stroke-width",1)
+                .attr("stroke",this.circle_Stroke_Width)
+                .attr("stroke-width",this.circle_Stroke)
                 .attr("id",()=>"flower"+nodes[i].id)
+                .attr("class","flowerAndPie")
+                .attr("opacity",1)
                 .on("click",()=>{
                     //选中该类，更新store.containNodes
                     this.$store.dispatch('updateContainNodes',classDic[nodes[i].id].ids);
@@ -200,7 +266,8 @@ export default {
             let r_max=this.$d3.max(this.getClassNames,d=>d.num);
             let r_min=this.$d3.min(this.getClassNames,d=>d.num);
             let r_scale=this.$d3.scaleLinear().domain([r_min,r_max]).range([this.radius_min,this.radius_max]);
-            console.log("r_max:",r_max,"r_min:",r_min);
+            //饼图半径比例尺
+            let pie_r_scale=this.$d3.scaleLinear().domain([r_min,r_max]).range([this.pie_R_Min,this.pie_R_Max]);
             //点颜色比例尺（映射midu属性）
             let c_max=this.$d3.max(this.getClassNames,d=>d.midu);
             let c_min=this.$d3.min(this.getClassNames,d=>d.midu);
@@ -275,6 +342,9 @@ export default {
                         .x(d=>d[0])
                         .y(d=>d[1])
                         .curve(this.$d3.curveBasis);
+            // 饼图布局
+            let pie = this.$d3.pie();
+            let innerRadius = 0;    // 内半径
             //（1）保留的点直接改变位置
             for(let i=0;i<retain.length;i++){
                 let newx=x_scale(nodesDic[retain[i].name].x);
@@ -285,15 +355,26 @@ export default {
                 let transX=newx-oldx;
                 let transY=newy-oldy;
                 let pointsArr=this.getPetal(nodesDic[retain[i].name],x_scale,y_scale,l_scale,oldx-parseFloat(oldTrans[0]),oldy-parseFloat(oldTrans[1]));
-                this.$d3.selectAll(".flowerPts"+retain[i].name)
+                this.$d3.selectAll("#flowerPts"+retain[i].name)
                     .attr("d",(d,k)=>{
                         return linePt(pointsArr[k]);
                     })
                 this.$d3.select(".flowerG"+retain[i].name).transition().duration(1000).ease(this.$d3.easeLinear)
                 .attr("transform",`translate(${transX},${transY})`);
                 this.$d3.select("#flower"+retain[i].name).transition().duration(1000).ease(this.$d3.easeLinear).attr("r",r_scale(classDic[retain[i].name].num));
-                
-                
+                let maxLengthPt=this.$d3.max(classDic[retain[i].name].shang,d=>l_scale(d))/1.5+this.addLength;//花瓣外环半径
+                this.$d3.select("#flowerPtCircle"+retain[i].name).transition().duration(1000).ease(this.$d3.easeLinear).attr("r",maxLengthPt);
+                //饼图半径改变
+                let outerRadius=pie_r_scale(classDic[retain[i].name].num);
+                let arc_generator = this.$d3.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius);
+                let pieData=pie(classDic[retain[i].name].shang);
+                for(let j=0;j<pieData.length;j++){
+                    this.$d3.select('#pie'+j+"_"+retain[i].name).select("path").transition().duration(1000).ease(this.$d3.easeLinear).attr("d",()=>arc_generator(pieData[j]));
+                }
+                let maxLengthPie=outerRadius+this.addLength;//饼图外环半径
+                this.$d3.select("#pieCircle"+retain[i].name).transition().duration(1000).ease(this.$d3.easeLinear).attr("r",maxLengthPie);
             }
             //(2)分解
             for(let i in disappearDic){
@@ -314,36 +395,81 @@ export default {
                     let g=node.append("g").attr("class","flowerG"+disappearDic[i][j].name);
                     g.attr("transform",`translate(${transX},${transY})`).attr("opacity",0)
                     .transition().duration(1000).ease(this.$d3.easeLinear).attr("transform",`translate(${0},${0})`).attr("opacity",1);
+                    //花瓣外环
+                    let maxLengthPt=this.$d3.max(classDic[disappearDic[i][j].name].shang,d=>l_scale(d))/1.5+this.addLength;//花瓣外环半径
+                    g.append('circle').attr("cx",x_scale(nodesDic[disappearDic[i][j].name].x))
+                    .attr("cy",y_scale(nodesDic[disappearDic[i][j].name].y)).attr('fill',"white").attr("r",maxLengthPt)
+                    .attr("stroke-width",this.pt_Circle_Stroke_Width).attr("stroke",this.pt_Circle_Stroke)
+                    .attr("opacity",()=>{if(this.getForceType=="flower")return 1;else if(this.getForceType=="pie") return 0})
+                    .attr("id","flowerPtCircle"+nodesDic[disappearDic[i][j].name].id)
+                    .attr("class","flower")
+                    //花瓣
                     let pointsArr=this.getPetal(nodesDic[disappearDic[i][j].name],x_scale,y_scale,l_scale);
                     g.selectAll("path").data(pointsArr).enter()
                     .append("path")
                     .attr("d",d=>linePt(d))
                     .attr("fill",(d,i)=>this.color[i])
-                    .attr("stroke-width",this.path_Stroke_Width)
-                    .attr("stroke",this.path_Stroke)
-                    .attr("class",()=>"flowerPts"+nodesDic[disappearDic[i][j].name].id)
+                    .attr("stroke-width",this.pt_Stroke_Width)
+                    .attr("stroke",this.pt_Stroke)
+                    .attr("id",()=>"flowerPts"+nodesDic[disappearDic[i][j].name].id)
+                    .attr("class","flower")
+                    .attr("opacity",()=>{if(this.getForceType=="flower")return 1;else if(this.getForceType=="pie") return 0})
                     .on("click",()=>{
                         //选中该类，更新store.containNodes
                         this.$store.dispatch('updateContainNodes',classDic[disappearDic[i][j].name].ids);
                     })
                     // .call(this.$d3.drag()
                     //     .on("drag",draged.bind(this,nodesDic[disappearDic[i][j].name].id)))
+                    // console.log(classDic[disappearDic[i][j].name].num)
+                    //饼图
+                    //弧线生成器
+                    let outerRadius=pie_r_scale(classDic[disappearDic[i][j].name].num);
+                    //饼图外环
+                    let maxLengthPie=outerRadius+this.addLength;//饼图外环半径
+                    g.append('circle').attr("cx",x_scale(nodesDic[disappearDic[i][j].name].x))
+                    .attr("cy",y_scale(nodesDic[disappearDic[i][j].name].y)).attr('fill',"white").attr("r",maxLengthPie)
+                    .attr("stroke-width",this.pie_Circle_Stroke_Width).attr("stroke",this.pie_Circle_Stroke)
+                    .attr("opacity",()=>{if(this.getForceType=="flower")return 0;else if(this.getForceType=="pie") return 1})
+                    .attr("id","pieCircle"+nodesDic[disappearDic[i][j].name].id)
+                    .attr("class","pie")
+                    let arc_generator = this.$d3.arc()
+                    .innerRadius(innerRadius)
+                    .outerRadius(outerRadius);
+                    let gs = g.selectAll('g')
+                    .data(pie(classDic[disappearDic[i][j].name].shang))
+                    .enter()
+                    .append('g')
+                    .attr("id",(d,k)=>"pie"+k+"_"+nodesDic[disappearDic[i][j].name].id)
+                    .attr("class","pie")
+                    .attr("opacity",()=>{if(this.getForceType=="flower")return 0;else if(this.getForceType=="pie") return 1})
+                    .attr('transform', `translate(${x_scale(nodesDic[disappearDic[i][j].name].x)},${y_scale(nodesDic[disappearDic[i][j].name].y)})`)
+
+                    // 绘制扇形
+                    gs.append('path')
+                    .attr('d', function (d) {
+                        return arc_generator(d);
+                    })
+                    .attr('fill', (d,i)=> {
+                        return this.color[i];   // 设置颜色
+                    })
+
+                    //花心
                     g.append("circle")
                     .attr("cx",x_scale(nodesDic[disappearDic[i][j].name].x))
                     .attr("cy",y_scale(nodesDic[disappearDic[i][j].name].y))
                     .attr("r",r_scale(classDic[disappearDic[i][j].name].num))
                     .attr("fill",this.interpolateColor(c_scale(classDic[disappearDic[i][j].name].midu)))
-                    .attr("stroke","steelblue")
-                    .attr("stroke-width",1)
+                    .attr("stroke",this.circle_Stroke_Width)
+                    .attr("stroke-width",this.circle_Stroke)
                     .attr("id",()=>"flower"+nodesDic[disappearDic[i][j].name].id)
+                    .attr("class","flowerAndPie")
+                    .attr("opacity",1)
                     .on("click",()=>{
                         //选中该类，更新store.containNodes
                         this.$store.dispatch('updateContainNodes',classDic[disappearDic[i][j].name].ids);
                     })
                     // .call(this.$d3.drag()
                     //     .on("drag",draged.bind(this,nodesDic[disappearDic[i][j].name].id)))
-                    
-                    // console.log(classDic[disappearDic[i][j].name].num)
                 }
                 setTimeout(()=>{
                     this.$d3.select(".flowerG"+i).remove();
@@ -355,34 +481,81 @@ export default {
                 //画键对应的点
                 let g=node.append("g").attr("class","flowerG"+i);
                 g.attr("transform",`translate(0,0)`).attr("opacity",0).transition().duration(1000).ease(this.$d3.easeLinear).attr("opacity",1);
+                //花瓣外环
+                let maxLengthPt=this.$d3.max(classDic[nodesDic[i].id].shang,d=>l_scale(d))/1.5+this.addLength;//花瓣外环半径
+                g.append('circle').attr("cx",x_scale(nodesDic[i].x))
+                .attr("cy",y_scale(nodesDic[i].y)).attr('fill',"white").attr("r",maxLengthPt)
+                .attr("stroke-width",this.pt_Circle_Stroke_Width).attr("stroke",this.pt_Circle_Stroke)
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 1;else if(this.getForceType=="pie") return 0})
+                .attr("id","flowerPtCircle"+nodesDic[i].id)
+                .attr("class","flower")
+                //花瓣
                 let pointsArr=this.getPetal(nodesDic[i],x_scale,y_scale,l_scale);
                 g.selectAll("path").data(pointsArr).enter()
                 .append("path")
                 .attr("d",d=>linePt(d))
                 .attr("fill",(d,i)=>this.color[i])
-                .attr("stroke-width",this.path_Stroke_Width)
-                .attr("stroke",this.path_Stroke)
-                .attr("class",()=>"flowerPts"+nodesDic[i].id)
+                .attr("stroke-width",this.pt_Stroke_Width)
+                .attr("stroke",this.pt_Stroke)
+                .attr("id",()=>"flowerPts"+nodesDic[i].id)
+                .attr("class","flower")
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 1;else if(this.getForceType=="pie") return 0})
                 .on("click",()=>{
                     //选中该类，更新store.containNodes
-                    this.$store.dispatch('updateContainNodes',classDic[classDic[nodesDic[i].id]].ids);
+                    this.$store.dispatch('updateContainNodes',classDic[nodesDic[i].id].ids);
                 })
                 // .call(this.$d3.drag()
                 //     .on("drag",draged.bind(this,nodesDic[i].id)))
+                //饼图
+                //弧线生成器
+                let outerRadius=pie_r_scale(classDic[nodesDic[i].id].num);
+                //饼图外环
+                let maxLengthPie=outerRadius+this.addLength;//饼图外环半径
+                g.append('circle').attr("cx",x_scale(nodesDic[i].x))
+                .attr("cy",y_scale(nodesDic[i].y)).attr('fill',"none").attr("r",maxLengthPie)
+                .attr("stroke-width",this.pie_Circle_Stroke_Width).attr("stroke",this.pie_Circle_Stroke)
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 0;else if(this.getForceType=="pie") return 1})
+                .attr("id","pieCircle"+nodesDic[i].id)
+                .attr("class","pie")
+                let arc_generator = this.$d3.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius);
+                let gs = g.selectAll('g')
+                .data(pie(classDic[nodesDic[i].id].shang))
+                .enter()
+                .append('g')
+                .attr("id",(d,j)=>"pie"+j+"_"+nodesDic[i].id)
+                .attr("class","pie")
+                .attr("opacity",()=>{if(this.getForceType=="flower")return 0;else if(this.getForceType=="pie") return 1})
+                .attr('transform', `translate(${x_scale(nodesDic[i].x)},${y_scale(nodesDic[i].y)})`)
+
+                // 绘制扇形
+                gs.append('path')
+                .attr('d', function (d) {
+                    return arc_generator(d);
+                })
+                .attr('fill', (d,i)=> {
+                    return this.color[i];   // 设置颜色
+                })
+
+                //花心
                 g.append("circle")
                 .attr("cx",x_scale(nodesDic[i].x))
                 .attr("cy",y_scale(nodesDic[i].y))
                 .attr("r",r_scale(classDic[nodesDic[i].id].num))
                 .attr("fill",this.interpolateColor(c_scale(classDic[nodesDic[i].id].midu)))
-                .attr("stroke","steelblue")
-                .attr("stroke-width",1)
+                .attr("stroke",this.circle_Stroke_Width)
+                .attr("stroke-width",this.circle_Stroke)
                 .attr("id",()=>"flower"+nodesDic[i].id)
+                .attr("class","flowerAndPie")
+                .attr("opacity",1)
                 .on("click",()=>{
                     //选中该类，更新store.containNodes
-                    this.$store.dispatch('updateContainNodes',classDic[classDic[nodesDic[i].id]].ids);
+                    this.$store.dispatch('updateContainNodes',classDic[nodesDic[i].id].ids);
                 })
                 // .call(this.$d3.drag()
                 //     .on("drag",draged.bind(this,nodesDic[i].id)))
+
                 //值对应的点消失
                 let newx=x_scale(nodesDic[i].x);
                 let newy=y_scale(nodesDic[i].y);
@@ -472,12 +645,16 @@ export default {
                         value:edgeArr[i].value,
                     })
                 }
+                let v_max=this.$d3.max(links,d=>d.value);
+                let v_min=this.$d3.min(links,d=>d.value);
+                let v_scale=this.$d3.scaleLinear().domain([v_max,v_min]).range([50,200]);//连value越大，距离越近
+                
                 //布局
                 const width = this.$refs.svg.clientWidth;
                 const height = this.$refs.svg.clientHeight;
                 var simulation=this.$d3.forceSimulation(nodesid);
                 simulation 
-                .force("link", this.$d3.forceLink(links).distance(200).id(d => d.id))
+                .force("link", this.$d3.forceLink(links).distance(d=>v_scale(d.value)).id(d => d.id))
                 .force("charge", this.$d3.forceManyBody())
                 .force("center", this.$d3.forceCenter(width / 2, height / 2))
                 .on('tick', function () {
@@ -569,6 +746,17 @@ export default {
             //如果是手动切割或者目标函数切割则动画过度
             else{
                 this.forceLayout(false);
+            }
+        },
+        getForceType:function(){
+            if(this.getForceType=="flower")
+            {
+                this.$d3.selectAll('.pie').transition().duration(500).ease(this.$d3.easeLinear).attr("opacity",0);
+                this.$d3.selectAll('.flower').transition().duration(1000).ease(this.$d3.easeLinear).attr("opacity",1);
+            }
+            else if(this.getForceType=="pie"){
+                this.$d3.selectAll('.flower').transition().duration(500).ease(this.$d3.easeLinear).attr("opacity",0);
+                this.$d3.selectAll('.pie').transition().duration(1000).ease(this.$d3.easeLinear).attr("opacity",1);
             }
         }
     }

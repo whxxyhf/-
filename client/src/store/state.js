@@ -13,5 +13,7 @@ const state={
     lastClass:[],
     //当前选择类包含的点id
     containNodes:[],
+    //力导图展示的类型，默认为花瓣图
+    forceType:"flower",
 };
 export default state;

@@ -39,7 +39,7 @@ export default {
             let line=this.$d3.line()
                         .x(d=>d[0])
                         .y(d=>d[1])
-                        .curve(this.$d3.curveCardinal)
+                        .curve(this.$d3.curveBasis)
             for(let i=0;i<this.chooseClass.length;i++){
                 //每类包含的点的坐标
                 let nodes_x_y=[];

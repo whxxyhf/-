@@ -16,8 +16,8 @@ export default {
             zhou_color:"steelblue",
             zhou_width:2,
             path_stroke:"#FFCC00",
-            path_stroke_width:1,
-            path_opacity:.5,
+            path_stroke_width:.5,
+            path_opacity:.3,
             //选中的path的颜色
             path_stroke_choosed:"red",
             
@@ -74,7 +74,7 @@ export default {
                 }
             }
             for(let i=0;i<arrArr.length;i++){
-                arrArr[i]=Array.from(new Set(arrArr[i])).sort((a,b)=>(a-b));
+                arrArr[i]=Array.from(new Set(arrArr[i])).sort((a,b)=>(b-a));
             }
             console.log(arrArr);
             //每个属性的比例尺

@@ -16,6 +16,9 @@ const actions={
     },
     updateContainNodes({commit},ids){
         commit('setContainNodes',ids);
+    },
+    updateForceType({commit},type){
+        commit('setForceType',type);
     }
 };
 export default actions;

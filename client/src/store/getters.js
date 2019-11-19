@@ -12,5 +12,7 @@ const getters={
     getLastClass:state=>state.lastClass,
     //获得选中类包含的点
     getContainNodes:state=>state.containNodes,
+    //获得当前导图展示类型
+    getForceType:state=>state.forceType,
 };
 export default getters;

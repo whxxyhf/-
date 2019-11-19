@@ -95,7 +95,9 @@ export default {
 .content{
     width:100%;
     height:100%;
-    background-color: #cccccc;
+    /* background-color: #cccccc; */
+    box-sizing: border-box;
+    border:0.5px solid #409EFF;
 }
 .attr{
     width:100%;
@@ -108,7 +110,7 @@ export default {
     height:100%;
     float:left;
     box-sizing: border-box;
-    border:1px solid #ccc;
+    border:0.5px solid #409EFF;
     padding: 5px 5px;
 }
 .right{
@@ -116,7 +118,7 @@ export default {
     height:100%;
     float:left;
     box-sizing: border-box;
-    border:1px solid #ccc;
+    border:0.5px solid #409EFF;
     padding: 5px 5px;
     margin-left:5px;
 }
