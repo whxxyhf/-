@@ -12,6 +12,7 @@
 </template>
 
 <script>
+import {mapGetters} from 'vuex';
 export default {
     name:'Tsne',
     props:[
@@ -25,12 +26,16 @@ export default {
             circle_Stroke:"steelblue",
             circle_Stroke_Width:0.5,
             path_Fill:"#EEEE00",
-            path_Stroke:"#EE0000",
+            path_Stroke:"#ccc",
+            path_Stroke_Choosed:"red",
             path_Stroke_Width:1.5,
-            path_Stroke_Opacity:.2,
+            path_Stroke_Opacity:.3,
             path_Fill_Opacity:.1,
             isFirst:true,
         }
+    },
+    computed:{
+        ...mapGetters(['getClickClass'])
     },
     methods:{
         drawPath(){
@@ -67,6 +72,11 @@ export default {
                     .attr("stroke-width",this.path_Stroke_Width)
                     .attr("fill-opacity",this.path_Fill_Opacity)
                     .attr("stroke-opacity",this.path_Stroke_Opacity)
+                    .attr("id",'polygo'+this.chooseClass[i].name)
+                    .attr("class",'polygo')
+                    .on("click",()=>{
+                        this.$store.dispatch('updateClickClass',this.chooseClass[i]);
+                    })
             }
         },
          
@@ -78,10 +88,16 @@ export default {
             //初始化后等class数据更新后再渲染
             this.isFirst=false;
         },
+        //监听选择层
         chooseClass:function(){
             if(!this.isFirst){
                 this.drawPath();
             }
+        },
+        //监听点击某个类
+        getClickClass:function(){
+            this.$d3.selectAll('.polygo').attr("stroke",this.path_Stroke);
+            this.$d3.select('#polygo'+this.getClickClass.name).attr("stroke",this.path_Stroke_Choosed);
         }
     }
     

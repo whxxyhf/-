@@ -56,7 +56,7 @@ import Tree from '../components/Tree';
 import ForceClass from '../components/ForceClass';
 import ControlPanel from '../components/ControlPanel';
 import Parallel from '../components/Parallel';
-import {mapActions,mapGetters} from 'vuex'
+import {mapActions,mapGetters} from 'vuex';
 export default {
     name:'GraphView',
     components:{

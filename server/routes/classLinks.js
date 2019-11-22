@@ -52,6 +52,15 @@ router.post('/findAll',(req,res)=>{
 router.post('/findClassLink',(req,res)=>{
     
     findForceLink(req,edges=>{
+        // console.log(edges.length)
+        // let newEdges=[];
+        // for(let i=0;i<edges.length;i++){
+        //     let num=Math.random();
+        //     if(num>0.7){
+        //         newEdges.push(edges[i]);
+        //     }
+        // }
+        // console.log(newEdges.length)
         return res.send(edges);
     })
 })

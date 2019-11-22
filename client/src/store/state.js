@@ -11,9 +11,9 @@ const state={
     type:"merge",
     //保留上一次选择的层次
     lastClass:[],
-    //当前选择类包含的点id
-    containNodes:[],
     //力导图展示的类型，默认为花瓣图
     forceType:"flower",
+    //当前点击的类
+    clickClass:{},
 };
 export default state;

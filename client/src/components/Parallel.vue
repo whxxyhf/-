@@ -15,7 +15,7 @@ export default {
             attrData:[],
             zhou_color:"steelblue",
             zhou_width:2,
-            path_stroke:"#FFCC00",
+            path_stroke:"#ccc",
             path_stroke_width:.5,
             path_opacity:.3,
             //选中的path的颜色
@@ -24,7 +24,7 @@ export default {
         }
     },
     computed:{
-        ...mapGetters(['getLabel','getType','getContainNodes']),
+        ...mapGetters(['getLabel','getType','getClickClass']),
     },
     methods:{
         draw(attrData){
@@ -76,7 +76,6 @@ export default {
             for(let i=0;i<arrArr.length;i++){
                 arrArr[i]=Array.from(new Set(arrArr[i])).sort((a,b)=>(b-a));
             }
-            console.log(arrArr);
             //每个属性的比例尺
             for(let i=0;i<count;i++){
                 let y=[];
@@ -113,8 +112,8 @@ export default {
             this.$d3.selectAll(".choosedPath").remove();
             //画选中的线
             let g=this.$d3.select("#svg_parallel").append("g").attr("class","choosedPath")
-            for(let i=0;i<this.getContainNodes.length;i++){
-                let pathD=this.$d3.select("#path_"+this.getContainNodes[i]).attr("d");
+            for(let i=0;i<this.getClickClass.ids.length;i++){
+                let pathD=this.$d3.select("#path_"+this.getClickClass.ids[i]).attr("d");
                 g.append("path")
                 .attr("fill","none")
                 .attr("stroke",this.path_stroke_choosed)
@@ -142,7 +141,7 @@ export default {
             this.draw(this.attrData);
         },
         //选中的类包含的点发生变化时，对应的线变颜色
-        getContainNodes:function(){
+        getClickClass:function(){
             this.changeColor();
         }
     }

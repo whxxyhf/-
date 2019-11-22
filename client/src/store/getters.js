@@ -10,9 +10,9 @@ const getters={
     getType:state=>state.type,
     //获得上一次选择的层次
     getLastClass:state=>state.lastClass,
-    //获得选中类包含的点
-    getContainNodes:state=>state.containNodes,
     //获得当前导图展示类型
     getForceType:state=>state.forceType,
+    //获得当前点击的类
+    getClickClass:state=>state.clickClass,
 };
 export default getters;

@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import {mapActions} from 'vuex'
+import {mapActions, mapGetters} from 'vuex'
 export default {
     name:'Tree',
     props:['tree','chooseNode'],
@@ -30,8 +30,9 @@ export default {
         return {
             circle_Fill:this.$d3.interpolateBlues,
             circle_R:3,
-            circle_Stroke:"red",
+            circle_Stroke:"#ccc",
             circle_Stroke_Choose:"orange",
+            circle_Stroke_Click:"red",
             circle_Stroke_Width:0.5,
             line_Stroke_Width:1,
             line_Stroke:'steelblue',
@@ -47,6 +48,9 @@ export default {
             history_shang:[],
             treeNode:[],//树布局转化后的节点
         }
+    },
+    computed:{
+        ...mapGetters(['getClickClass']),
     },
     methods:{
         ...mapActions(['updateClassNames']),
@@ -118,7 +122,7 @@ export default {
                 }
             }
             //画分层线
-            let line=this.$d3.line()
+            let line=this.$d3.line().curve(this.$d3.curveStep)
             svg.append("path")
             .attr("fill","none")
             .attr("stroke",this.line_Stroke)
@@ -284,6 +288,10 @@ export default {
     watch:{
         tree:function(){
             this.drawTree();
+        },
+        //监听点击了某个类
+        getClickClass:function(){
+            
         }
     }
     

@@ -14,11 +14,11 @@ const actions={
     updateLastClass({commit},lastClass){
         commit('setLastClass',lastClass);
     },
-    updateContainNodes({commit},ids){
-        commit('setContainNodes',ids);
-    },
     updateForceType({commit},type){
         commit('setForceType',type);
+    },
+    updateClickClass({commit},clickClass){
+        commit('setClickClass',clickClass);
     }
 };
 export default actions;
