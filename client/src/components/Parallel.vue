@@ -55,7 +55,7 @@ export default {
                 g.append("line").attr("x1",X[i]).attr("x2",X[i]).attr("y1",Y[0]).attr("y2",Y[1])
                 .attr("fill","none").attr("stroke",this.zhou_color).attr("stroke-width",this.zhou_width);
                 g.append("text")
-                .attr("x",X[i]-10)
+                .attr("x",X[i]-15)
                 .attr("y",20)
                 .attr("font-size",10)
                 .text(attrs[i])

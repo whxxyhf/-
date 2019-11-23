@@ -7,7 +7,7 @@ const fun=require('../config/fun');
 
 //向数据库中插入网络连接
 router.get('/insertLinks',(req,res)=>{
-    fs.readFile('./public/data/links.csv', function (err, data) {
+    fs.readFile('./public/data/originalLinkData/links.csv', function (err, data) {
         // var table = new Array();
         if (err) {
             console.log(err);

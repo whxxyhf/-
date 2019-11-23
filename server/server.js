@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 
 //连接mongodb数据库
 mongoose.Promise=global.Promise;
-mongoose.connect('mongodb://localhost/net',{useNewUrlParser:true, useUnifiedTopology: true })
+mongoose.connect('mongodb://localhost/second',{useNewUrlParser:true, useUnifiedTopology: true })
         .then(()=>console.log('connect database successful!'))
         .catch((err)=>console.log(err));
 
@@ -37,7 +37,11 @@ app.use('/tree',TreeRouter);
 app.use('/classLink',ClassLinkRouter);
 
 app.use('/',(req,res)=>{
-    res.send("ok");
+    res.writeHead(200,{'Content-Type':'text/html;charset=UTF8'});
+    res.write('<a href="http://localhost:5000/link/insertLinks">插入连接数据</a><br/>');
+    res.write('<a href="http://localhost:5000/tsne/insertTsneNodes">插入tsne数据</a><br/>');
+    res.write('<a href="http://localhost:5000/classLink/insertClassLinks">插入类连接数据</a><br/>');
+    res.end();
 })
 
 const port=process.env.PORT || 5000;

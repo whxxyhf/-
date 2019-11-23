@@ -6,8 +6,7 @@ const fs=require('fs')
 router.post('/findTree',(req,res)=>{
     let label=req.body.label;
     let type=req.body.type;
-    
-    let fileName='./public/data/treeData/'+label+"_130.1_"+type+'_t.json';
+    let fileName='./public/data/treeData/'+label+"_130.5_"+type+'_t.json';
     fs.readFile(fileName,(err,data)=>{
         
         if(err) console.log(err)

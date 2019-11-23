@@ -2,8 +2,10 @@
     <div class="box">
         <!--能量函数-->
         <div class="top">
-            <el-checkbox :label="value" :id="'input_'+index"  v-for="(value,index) in attributions" :key="index" @change="updateOne(index)">
-            </el-checkbox>
+            <!-- <el-checkbox-group v-model="initAtrrrs">
+                <el-checkbox-button :label="value" :id="'input_'+index"  v-for="(value,index) in attributions" :key="index" @change="updateOne(index)">
+                </el-checkbox-button>
+            </el-checkbox-group> -->
         </div>
 
         <!--tree-->
@@ -38,19 +40,22 @@ export default {
             line_Stroke:'steelblue',
             radius_min:2,
             radius_max:5,
+            splitLine_Width:2,//分割线宽度
+            splitLine_Stroke:"red",//分割线颜色
             color:["#FF3030","#FF00FF","#C0FF3E","#87CEFA","#FFC0CB"],
             attributions:["one","two","three","four","five"],
+            initAtrrrs:[],
             choosedAttrs:[false,false,false,false,false],//选择了哪些属性
             padding:{
                 top:10,
                 left:10,
             },
             history_shang:[],
-            treeNode:[],//树布局转化后的节点
+            treeNode:{},//树布局转化后的节点
         }
     },
     computed:{
-        ...mapGetters(['getClickClass']),
+        ...mapGetters(['getClickClass','getClassNames']),
     },
     methods:{
         ...mapActions(['updateClassNames']),
@@ -81,7 +86,9 @@ export default {
             //d3树布局
             var tree=this.$d3.tree().size([width,height])(this.$d3.hierarchy(this.tree));
             var g=svg.append("g").attr("transform", `translate(${this.padding.left},${this.padding.top})`);
-            this.treeNode=tree.descendants();
+            for(let i=0;i<tree.descendants().length;i++){
+                this.treeNode[tree.descendants()[i].data.name]=tree.descendants()[i];
+            }
             //点半径比例尺
             let r_max=this.$d3.max(tree.descendants(),d=>d.data.num);
             let r_min=this.$d3.min(tree.descendants(),d=>d.data.num);
@@ -122,11 +129,11 @@ export default {
                 }
             }
             //画分层线
-            let line=this.$d3.line().curve(this.$d3.curveStep)
+            let line=this.$d3.line().curve(this.$d3.curveStep);
             svg.append("path")
             .attr("fill","none")
-            .attr("stroke",this.line_Stroke)
-            .attr("stroke-width",this.circle_R*2)
+            .attr("stroke",this.splitLine_Stroke)
+            .attr("stroke-width",this.splitLine_Width)
             .attr("id","choosedPath")
             .attr("d",line(pathPoints))
             .attr("stroke-opacity",.3)         
@@ -179,10 +186,10 @@ export default {
                     }
                     //选中当前点
                     this.$d3.select("#treeNode"+d.data.name).attr("stroke",this.circle_Stroke_Choose);
-                    this.$d3.select("#choosedPath")
-                    .transition()
-                    .duration(500)
-                    .ease(this.$d3.easeLinear).attr("d",line(pathPoints));
+                    // this.$d3.select("#choosedPath")
+                    // .transition()
+                    // .duration(500)
+                    // .ease(this.$d3.easeLinear).attr("d",line(pathPoints));
                     this.updateClassNames(this.chooseNode);
                 }
                 else{
@@ -214,11 +221,11 @@ export default {
                         }
                         //取消祖先节点的选中状态
                         this.$d3.select("#treeNode"+root.data.name).attr("stroke",this.circle_Stroke);
-                        this.$d3.select("#choosedPath")
-                        .transition()
-                        .duration(500)
-                        .ease(this.$d3.easeLinear)
-                        .attr("d",line(pathPoints));
+                        // this.$d3.select("#choosedPath")
+                        // .transition()
+                        // .duration(500)
+                        // .ease(this.$d3.easeLinear)
+                        // .attr("d",line(pathPoints));
                         
                         this.updateClassNames(this.chooseNode);
                     }
@@ -292,6 +299,18 @@ export default {
         //监听点击了某个类
         getClickClass:function(){
             
+        },
+        getClassNames:function(){
+            let pathPoints=[];
+            for(let i=0;i<this.getClassNames.length;i++){
+                    pathPoints.push([this.treeNode[this.getClassNames[i].name].x+this.padding.left,this.treeNode[this.getClassNames[i].name].y+this.padding.top]);
+            }
+            let line=this.$d3.line().curve(this.$d3.curveStep);
+            this.$d3.select("#choosedPath")
+                        .transition()
+                        .duration(500)
+                        .ease(this.$d3.easeLinear)
+                        .attr("d",line(pathPoints));
         }
     }
     
@@ -323,5 +342,14 @@ export default {
     height:65%;
     box-sizing: border-box;
     border-bottom: 1px solid #409EFF;
+}
+
+.el-checkbox-button{
+    width:30px;
+    height:20px;
+}
+.el-checkbox-button__inner{
+    padding: 2px 2px !important;
+    font-size: 12px !important;
 }
 </style>

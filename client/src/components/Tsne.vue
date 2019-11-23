@@ -29,7 +29,7 @@ export default {
             path_Stroke:"#ccc",
             path_Stroke_Choosed:"red",
             path_Stroke_Width:1.5,
-            path_Stroke_Opacity:.3,
+            path_Stroke_Opacity:.7,
             path_Fill_Opacity:.1,
             isFirst:true,
         }

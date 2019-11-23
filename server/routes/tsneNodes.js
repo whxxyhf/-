@@ -23,9 +23,10 @@ router.get('/insertTsneNodes',(req,res)=>{
                 let data=fs.readFileSync(dir+"/"+path);
                 fun.ConvertToTable(data, function (table) {
                     for(var i=0;i<table.length;i++){
-                        if(table[i][0]!=''){
-                            let newTsneNode=new TsneNode({"name":table[i][0],attr:{"conf":table[i][1],'year':table[i][2],'times':table[i][3]},
-                                'x':table[i][4],'y':table[i][5],'label':label,'type':type});
+                        if(table[i][0]!=''){//year,country,people,tech,counts
+                            let newTsneNode=new TsneNode({"name":table[i][0],
+                            attr:{"year":table[i][3],'country':table[i][4],'people':table[i][5],'tech':table[i][6],'counts':table[i][7]},
+                                'x':table[i][1],'y':table[i][2],'label':label,'type':type});
                             newTsneNode.save();
                         }
                     }

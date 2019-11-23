@@ -22,8 +22,8 @@
             <Panel :title="'Node-Link View'" :panelHeight="'100%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;" >
                 <ForceClass slot="panelBody"/>
                 <select v-model="forceType" @change="chooseForceType" slot="title" style="float:right">
-                    <option value="flower">Flower</option>
-                    <option value="pie">Pie</option>
+                    <option value="flower">Global</option>
+                    <option value="pie">Local</option>
                 </select>
             </Panel>
         </div>

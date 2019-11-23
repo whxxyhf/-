@@ -29,7 +29,7 @@
 
             <div class="right">
                 <el-checkbox-group v-model="initAtrrrs" :id="'input_'+index"  v-for="(value,index) in attributions" :key="index" :fill="color[index]" :text-color="color[index]">
-                    <el-checkbox :label="value" @change="updateTypeOne(index)"></el-checkbox><br/>
+                    <el-checkbox :label="value" @change="updateTypeOne(index)">{{value}}</el-checkbox><br/>
                 </el-checkbox-group>
                 <el-button size="mini" @click="updateType">OK</el-button>
             </div>
@@ -45,7 +45,7 @@ export default {
             //初始选择的属性
             initAtrrrs:[],
             //所有的属性
-            attributions:["one","two","three","four","five"],
+            attributions:["year","country","people","tech","counts"],
             color:["#FF3030","#FF00FF","#C0FF3E","#87CEFA","#FFC0CB"],
             label:[],
             trainStep:5,
