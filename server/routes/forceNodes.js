@@ -8,10 +8,10 @@ const Link=require('../models/Link');
 const fun=require('../config/fun');
 
 //向数据库中插入力导向布局后点的坐标（会清空之前的布局数据）
-router.get('/forceLayout',(req,res)=>{
+router.get('/forceLayout/:id',(req,res)=>{
     Alledges = [];
     Allnodes = [];
-    fs.readFile('./public/data/links.csv', function (err, data) {
+    fs.readFile(`./public/${req.params.id}/originalLinkData/links.csv`, function (err, data) {
         // var table = new Array();
         if (err) {
             console.log(err);
@@ -30,7 +30,7 @@ router.get('/forceLayout',(req,res)=>{
                     };
                 }
             }
-            drawforce(Allnodes,Alledges,res);
+            drawforce(Allnodes,Alledges,res,req.params.id);
         })
     })
 });
@@ -39,13 +39,14 @@ router.get('/forceLayout',(req,res)=>{
 router.post('/findAll',(req,res)=>{
     let width=req.body.width;
     let height=req.body.height;
+    let file=req.body.file;
     let padding={
         left:10,
         right:10,
         top:10,
         bottom:10
     };
-    forceNode.find({})
+    forceNode.find({file:file})
     .then((nodes)=>{
         //将x,y根据width,height做比例映射
         let dic={};
@@ -54,15 +55,15 @@ router.post('/findAll',(req,res)=>{
         let y_max=d3.max(nodes,d=>d.y);
         let y_min=d3.min(nodes,d=>d.y);
         //让取值范围大于1然后取对数
-        let xmin=Math.log10(x_min+Math.abs(x_min)+1);
-        let xmax=Math.log10(x_max+Math.abs(x_min)+1);
-        let ymin=Math.log10(y_min+Math.abs(y_min)+1);
-        let ymax=Math.log10(y_max+Math.abs(y_min)+1);
-        let x_scale=d3.scaleLinear().domain([xmin,xmax]).range([padding.left,width-padding.right]);
-        let y_scale=d3.scaleLinear().domain([ymin,ymax]).range([height-padding.bottom,padding.top]);
+        // let xmin=Math.log10(x_min+Math.abs(x_min)+1);
+        // let xmax=Math.log10(x_max+Math.abs(x_min)+1);
+        // let ymin=Math.log10(y_min+Math.abs(y_min)+1);
+        // let ymax=Math.log10(y_max+Math.abs(y_min)+1);
+        let x_scale=d3.scaleLinear().domain([x_min,x_max]).range([padding.left,width-padding.right]);
+        let y_scale=d3.scaleLinear().domain([y_min,y_max]).range([padding.top,height-padding.bottom]);
         for(let i=0;i<nodes.length;i++){
-            let x=x_scale(Math.log10(nodes[i].x+Math.abs(x_min)+1));
-            let y=y_scale(Math.log10(nodes[i].y+Math.abs(y_min)+1));
+            let x=x_scale(nodes[i].x);
+            let y=y_scale(nodes[i].y);
             dic[nodes[i].name]={x:x,y:y};
         };
         return res.send(dic);
@@ -73,8 +74,21 @@ router.post('/findAll',(req,res)=>{
     });
 })
 
+//查询所有点的数量
+router.post('/findNodeCount',(req,res)=>{
+    let file=req.body.file;
+    forceNode.countDocuments({file:file})
+    .then((count)=>{
+        return res.send({data:count});
+    })
+    .catch((err)=>{
+        console.log(err);
+        return res.send({data:"查询失败"})
+    });
+})
+
 //力导向布局函数
-function drawforce(nodeArr, edgeArr,res) {
+function drawforce(nodeArr, edgeArr,res,file) {
     var nodesid = [];
     for (var i = 0; i < nodeArr.length; i++) {
         nodesid.push({
@@ -90,11 +104,11 @@ function drawforce(nodeArr, edgeArr,res) {
         })
     }
 
-    const width = 1000;
-    const height = 2000;
+    const width = 600;
+    const height = 800;
     
     var simulation = d3.forceSimulation(nodesid)
-        .force("link", d3.forceLink(links).id(d => d.id))
+        .force("link", d3.forceLink(links).distance(100).id(d => d.id))
         .force("charge", d3.forceManyBody())
         .force("center", d3.forceCenter(width / 2, height / 2))
         .on('tick', function () {
@@ -115,6 +129,7 @@ function drawforce(nodeArr, edgeArr,res) {
                         name:nodesid[i].id,
                         x:nodesid[i].x,
                         y:nodesid[i].y,
+                        file:file,
                     });
                     newForceNode.save();
                 

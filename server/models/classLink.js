@@ -22,6 +22,10 @@ const classLinkSchema=new Schema({
     type:{
         type:String,
         required:true,
+    },
+    file:{
+        type:String,
+        required:true,
     }
 })
 

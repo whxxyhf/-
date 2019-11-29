@@ -6,6 +6,8 @@
                 <el-checkbox-button :label="value" :id="'input_'+index"  v-for="(value,index) in attributions" :key="index" @change="updateOne(index)">
                 </el-checkbox-button>
             </el-checkbox-group> -->
+            <input type="button" :value="value" v-for="(value,index) in attributions" :key="index" @click="updateOne(index)">
+            <input type="button" value="split">
         </div>
 
         <!--tree-->
@@ -43,7 +45,7 @@ export default {
             splitLine_Width:2,//分割线宽度
             splitLine_Stroke:"red",//分割线颜色
             color:["#FF3030","#FF00FF","#C0FF3E","#87CEFA","#FFC0CB"],
-            attributions:["one","two","three","four","five"],
+            attributions:["year","country","people","tech","count"],
             initAtrrrs:[],
             choosedAttrs:[false,false,false,false,false],//选择了哪些属性
             padding:{
@@ -61,11 +63,12 @@ export default {
         ...mapActions(['updateClassNames']),
         updateOne(index){
             var event = window.event||arguments[0];
-            if(event.target.checked){
-                this.choosedAttrs[index]=true;
+            this.choosedAttrs[index]=!this.choosedAttrs[index];
+            if(this.choosedAttrs[index]){
+                event.target.style.background=this.color[index];
             }
             else{
-                this.choosedAttrs[index]=false;
+                event.target.style.background="#FFF";
             }
             let indexArr=[];
             for(let i=0;i<this.choosedAttrs.length;i++){
@@ -81,9 +84,11 @@ export default {
         drawTree(){
             //获得svg的长宽
             var width=this.$refs.svg.clientWidth-this.padding.left*2;
-            var height=this.$refs.svg.clientHeight-this.padding.top*2;
+            var height=this.$refs.svg.clientHeight-this.padding.top*6;
             var svg=this.$d3.select("#svg_tree");
             //d3树布局
+            svg.selectAll("g").remove();
+            svg.selectAll("path").remove();
             var tree=this.$d3.tree().size([width,height])(this.$d3.hierarchy(this.tree));
             var g=svg.append("g").attr("transform", `translate(${this.padding.left},${this.padding.top})`);
             for(let i=0;i<tree.descendants().length;i++){
@@ -107,6 +112,12 @@ export default {
             .attr("fill", "none")
             .attr("stroke", "#555")
             .attr("stroke-opacity", 0.4)
+            .attr("opacity",d=>{
+                if(d.target.data.ifsan==1){
+                    return 0;
+                }
+                return .4;
+            })
             .attr("stroke-width", this.line_Stroke_Width)
             .attr("d", this.$d3.linkVertical()
             .x(d => d.x)
@@ -140,7 +151,6 @@ export default {
             // console.log(tree.descendants())
             //画树结点
             node.append("circle")
-            
             .attr("fill",d=>this.circle_Fill(c_scale(this.$d3.mean(d.data.shang))))
             .attr("stroke",d=>{
                 for(let j=0;j<this.chooseNode.length;j++){
@@ -153,7 +163,14 @@ export default {
             .attr("stroke-width",this.circle_Stroke_Width)
             .style("cursor","pointer")
             .attr("id",(d)=>{
-                return "treeNode"+d.data.name;
+                if(d.data.ifsan==0)
+                    return "treeNode"+d.data.name;
+            })
+            .attr("opacity",d=>{
+                if(d.data.ifsan==0){
+                    return 1;
+                }
+                return 0;
             })
             .on("click",(d)=>{
                 //更新lastClass
@@ -235,11 +252,55 @@ export default {
                     
                 }
             })
-            .attr("r",0)
-            .transition()
-            .duration(1000)
-            .ease(this.$d3.easeLinear)
-            .attr("r", d=>r_scale(d.data.num)) 
+            .attr("r", d=>r_scale(d.data.num));
+
+            //画最底层结点
+            let maxHeight=this.padding.top*5.5;
+            let minHeight=this.padding.top*2;
+            let nodesCount=[];
+            for(let i in this.treeNode){
+                if(this.treeNode[i].data.ifsan==1){
+                    nodesCount.push(this.treeNode[i].data.num);
+                }
+            }
+            //矩形高度比例尺
+            let h_max=this.$d3.max(nodesCount);
+            let h_min=this.$d3.min(nodesCount);
+            let h_scale=this.$d3.scaleLinear().domain([h_min,h_max]).range([minHeight,maxHeight]);
+            for(let i in this.treeNode){
+                if(this.treeNode[i].data.ifsan==1){
+                    let rectG=g.append('g').attr("id","treeNode"+this.treeNode[i].data.name);
+                    let x=this.treeNode[i].parent.x;
+                    let rectWidth=8;
+                    let rectHeight=h_scale(this.treeNode[i].data.num);
+                    let y=this.$refs.svg.clientHeight-rectHeight-this.padding.top*1.5;
+                    let shang_max=this.$d3.max(this.treeNode[i].data.shang);
+                    let shang_min=this.$d3.min(this.treeNode[i].data.shang);
+                    let sh_scale=this.$d3.scaleLinear().domain([shang_max,shang_min]).range([1,2]);
+                    let shang=this.treeNode[i].data.shang.map(value=>{
+                        return sh_scale(value);
+                    });
+                    let shang_sum=this.$d3.sum(shang);
+                    let pathPointsData=[[x,this.treeNode[i].parent.y],[x,y]];
+                    rectG.append("path")
+                        .attr("d",line(pathPointsData))
+                        .attr("fill", "none")
+                        .attr("stroke", "#555")
+                        .attr("stroke-opacity", 0.4)
+                        .attr("stroke-width", this.line_Stroke_Width)
+                    for(let j=0;j<this.treeNode[i].data.shang.length;j++){
+                        rectG.append("rect")
+                        .attr("x",x-rectWidth/2)
+                        .attr('y',y)
+                        .attr("width",rectWidth)
+                        .attr("height",rectHeight*shang[j]/shang_sum)
+                        .attr("fill",this.color[j])
+                        y+=rectHeight*shang[j]/shang_sum;
+                    }
+                    
+                    
+                }
+            }
         },
         isExit(node){
             for(let j=0;j<this.chooseNode.length;j++){
@@ -325,7 +386,7 @@ export default {
 }
 .top{
     width:100%;
-    height:15%;
+    height:12%;
     box-sizing: border-box;
     border-bottom: 1px solid #409EFF;
     padding: 0px 5px;
@@ -339,9 +400,29 @@ export default {
 
 .middle{
     width:100%;
-    height:65%;
+    height:70%;
     box-sizing: border-box;
     border-bottom: 1px solid #409EFF;
+}
+
+.top input{
+    display: inline-block;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    background: #FFF;
+    border: 1px solid #DCDFE6;
+    color: #606266;
+    -webkit-appearance: none;
+    text-align: center;
+    box-sizing: border-box;
+    outline: 0;
+    margin: 3px 2px;
+    transition: .1s;
+    font-size: 12px;
+    border-radius: 4px;
+    padding:3px 5px;
+    height:25px;
 }
 
 .el-checkbox-button{

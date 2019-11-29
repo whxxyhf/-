@@ -5,10 +5,11 @@ const fs=require('fs');
 const ClassLink=require('../models/classLink');
 
 //插入classLink数据
-router.get('/insertClassLinks',(req,res)=>{
-    let dir='./public/data/classLinkData';
+router.get('/insertClassLinks/:id',(req,res)=>{
+    let file=req.params.id;
+    let dir=`./public/${file}/classLinkData`;
     let filePaths=fs.readdirSync(dir);
-    ClassLink.remove({},(err)=>{
+    ClassLink.remove({file:file},(err)=>{
         if(err){
             console.log("err:",err);
         }
@@ -19,16 +20,19 @@ router.get('/insertClassLinks',(req,res)=>{
                 let label=words[0];
                 let type=words[2];
                 let data=JSON.parse(fs.readFileSync(dir+"/"+path)).links;
+                let newLinks=[];
                 for(let k=0;k<data.length;k++){
-                    let newClassLink=new ClassLink({
+                    let newClassLink={
                         'source':data[k].source,
                         'target':data[k].target,
                         'value':data[k].value,
                         'label':label,
                         'type':type,
-                    })
-                    newClassLink.save();
+                        'file':file,
+                    }
+                    newLinks.push(newClassLink);
                 }
+                ClassLink.insertMany(newLinks);
             }
             res.send({"data":'数据插入完成！'});
         }
@@ -39,7 +43,8 @@ router.get('/insertClassLinks',(req,res)=>{
 router.post('/findAll',(req,res)=>{
     let label=req.body.label;
     let type=req.body.type;
-    ClassLink.find({'label':label,'type':type},{})
+    let file=req.body.file;
+    ClassLink.find({'label':label,'type':type,'file':file},{})
     .then((links)=>{
         return res.send(links);
     })
@@ -68,9 +73,10 @@ router.post('/findClassLink',(req,res)=>{
 function findForceLink(req,callback){
     let label=req.body.label;
     let type=req.body.type;
+    let file=req.body.file;
     let classes=req.body.classes;
     let edges=[];
-    ClassLink.find({'label':label,'type':type},{'source':1,'target':1,'value':1,'_id':0})
+    ClassLink.find({'label':label,'type':type,'file':file},{'source':1,'target':1,'value':1,'_id':0})
     .then(link=>{
         for(let i=0;i<classes.length-1;i++){
             for(let j=i+1;j<classes.length;j++){

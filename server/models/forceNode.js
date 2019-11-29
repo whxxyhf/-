@@ -15,6 +15,10 @@ const forceNodeSchema=new Schema({
         type:Number,
         required:true
     },
+    file:{
+        type:String,
+        required:true,
+    }
 })
 
 module.exports=forceNode=mongoose.model("forceNode",forceNodeSchema,"forceNode");

@@ -24,7 +24,7 @@ export default {
         }
     },
     computed:{
-        ...mapGetters(['getLabel','getType','getClickClass']),
+        ...mapGetters(['getLabel','getType','getFile','getClickClass']),
     },
     methods:{
         draw(attrData){
@@ -126,6 +126,7 @@ export default {
             this.$axios.post('http://localhost:5000/tsne/findAllAttr',{
                 label:this.getLabel,
                 type:this.getType,
+                file:this.getFile,
             })
             .then((res)=>{
                 this.attrData=res.data;
@@ -143,6 +144,12 @@ export default {
         //选中的类包含的点发生变化时，对应的线变颜色
         getClickClass:function(){
             this.changeColor();
+        },
+        getLabel:function(){
+            this.getAttrData();
+        },
+        getType:function(){
+            this.getAttrData();
         }
     }
 }

@@ -25,4 +25,7 @@ html,body{
   box-sizing: border-box;
   padding:8px 8px;
 }
+[v-cloak] {
+  display: none;
+}
 </style>

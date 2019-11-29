@@ -1,24 +1,47 @@
 const actions={
+    //更新选中的某一层所有类
     updateClassNames({commit},names){
         commit('setClassNames',names);
     },
+    //更新tsne数据
     updateTsne({commit},tsne){
         commit('setTsne',tsne);
     },
+    //跟新文件名
+    updateFile({commit},file){
+        commit('setFile',file);
+    },
+    //更新Label
     updateLabel({commit},label){
         commit('setLabel',label);
     },
+    //更新Type
     updateType({commit},type){
         commit('setType',type);
     },
+    //更新上一次选中的class
     updateLastClass({commit},lastClass){
         commit('setLastClass',lastClass);
     },
+    //更新力图类型（已废弃）
     updateForceType({commit},type){
         commit('setForceType',type);
     },
+    //更新点击的类
     updateClickClass({commit},clickClass){
         commit('setClickClass',clickClass);
+    },
+    //更新选中的类中属于最低层的类
+    updateBottomClass({commit},names){
+        commit('setBottomClass',names);
+    },
+    //更新选中的类中不属于最低层的类
+    updateNotBottomClass({commit},names){
+        commit('setNotBottomClass',names);
+    },
+    //更新树的根节点
+    updateTreeRoot({commit},root){
+        commit('setTreeRoot',root);
     }
 };
 export default actions;
