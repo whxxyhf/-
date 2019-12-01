@@ -22,5 +22,7 @@ const getters={
     getNotBottomClass:state=>state.notBottomClass,
     //获得树的根
     getTreeRoot:state=>state.treeRoot,
+    //获得是否布局
+    getCutFlag:state=>state.cutFlag,
 };
 export default getters;

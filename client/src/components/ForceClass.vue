@@ -25,7 +25,7 @@ export default {
             circle_Stroke:'white',
             path_Fill:"none",
             path_Stroke:"#ccc",
-            path_Stroke_Width_Max:7,//连线宽度最大值
+            path_Stroke_Width_Max:5,//连线宽度最大值
             path_Stroke_Width_Min:.5,//连线宽度最小值
             pt_Length_max:40,//花瓣最长半径
             pt_Length_min:18,//花瓣最短半径
@@ -43,17 +43,21 @@ export default {
             pt_Circle_Stroke_Choosed:"red",//花瓣外环选中颜色
             pt_Circle_Stroke_Width:2,
             //饼图的一些属性
-            pie_R_Max:30,
-            pie_R_Min:10,
+            pie_R_Max:50,
+            pie_R_Min:20,
             pie_H_min:5,
             pie_Circle_Stroke:"#ccc",
             pie_Circle_Stroke_Width:2,
             pie_Circle_Stroke_Choosed:'red',
             pie_Padding:0.1,
+            pie_Middle_Circle_Stroke_Width:2,
+            pie_Middle_Circle_Stroke:'#ccc',
 
             canClick:0,//0,1,2,3分别表示没有点击，选中，切割，切割到底
-            san_R:1,
+            san_R:3,
             san_Fill:'#ccc',
+            san_Stroke_Width:1.5,
+            san_Stroke:"blue"
             
         }
     },
@@ -66,7 +70,6 @@ export default {
         draw(nodes,links,EdgeBundling){
             // console.log("nodes:",nodes)
             // console.log("links:",links)
-            
             let lastClass=[];
             let classDic={};
             for(let i=0;i<this.getClassNames.length;i++){
@@ -148,87 +151,136 @@ export default {
             let innerRadius = 0;    // 内半径
             for(let i=0;i<nodes.length;i++){
                 let g=node.append("g").attr("class","flowerG"+nodes[i].id).attr("transform",`translate(0,0)`).attr("opacity",1);
-                //饼图
-                //弧线生成器
-                let outerRadiusMax=pie_r_scale(classDic[nodes[i].id].num);
-                //饼图外环
-                let maxLengthPie=outerRadiusMax+this.addLength;//饼图外环半径
-                g.append('circle').attr("cx",nodes[i].x)
-                .attr("cy",nodes[i].y).attr('fill',"white").attr("r",maxLengthPie)
-                .attr("stroke-width",this.pie_Circle_Stroke_Width).attr("stroke",this.pie_Circle_Stroke)
-                .attr("opacity",1)
-                .attr("id","pieCircle"+nodes[i].id)
-                .attr("class","pie pieCircle")
-                let sh_max=this.$d3.max(classDic[nodes[i].id].shang);
-                let sh_min=this.$d3.min(classDic[nodes[i].id].shang);
-                let sh_scale=this.$d3.scaleLinear().domain([sh_max,sh_min]).range([2,10])
-                let pieData=[];
-                let shangcha=[];
-                for(let j=0;j<classDic[nodes[i].id].shang.length;j++){
-                    pieData.push(sh_scale(classDic[nodes[i].id].shang[j]));
-                    shangcha.push(classDic[nodes[i].id].shang[j]-this.getTreeRoot.shang[j]);
-                }
-                //扇形高度比例尺
-                let sc_max=this.$d3.max(shangcha);
-                let sc_min=this.$d3.min(shangcha);
-                let sc_scale=this.$d3.scaleLinear().domain([sc_max,sc_min]).range([outerRadiusMax/1.5,outerRadiusMax]);
-                console.log(shangcha)
-                let gs = g.selectAll('g')
-                .data(pie(pieData))
-                .enter()
-                .append('g')
-                .attr("id",(d,j)=>"pie"+j+"_"+nodes[i].id)
-                .attr("class","pie")
-                .attr("opacity",1)
-                .attr('transform', `translate(${nodes[i].x},${nodes[i].y})`)
-                
-                // 绘制扇形
-                gs.append('path')
-                .attr('d', function (d,k) {
-                    let arc_generator = this.$d3.arc()
-                    .innerRadius(innerRadius)
-                    .outerRadius(sc_scale(shangcha[k]));
-                    return arc_generator(d);
-                }.bind(this))
-                .attr('fill', (d,i)=> {
-                    return this.color[i];   // 设置颜色
-                })
-                .on("click",()=>{
-                    //选中该类，更新store.clickClass
-                    // if(this.canClick==1){
-                    //     this.$store.dispatch('updateClickClass',classDic[nodes[i].id]);
-                    // }
-                    this.clickEvent(classDic[nodes[i].id]);
-                })
+                if(nodes[i].ifsan==0){
+                    //饼图
+                    //弧线生成器
+                    let outerRadiusMax=pie_r_scale(classDic[nodes[i].id].num);
+                    //饼图外环
+                    let maxLengthPie=outerRadiusMax+this.addLength;//饼图外环半径
+                    g.append('circle').attr("cx",nodes[i].x)
+                    .attr("cy",nodes[i].y).attr('fill',"white").attr("r",maxLengthPie)
+                    .attr("stroke-width",this.pie_Circle_Stroke_Width).attr("stroke",this.pie_Circle_Stroke)
+                    .attr("opacity",1)
+                    .attr("id","pieCircle"+nodes[i].id)
+                    .attr("class","pie pieCircle")
+                    maxLengthPie=maxLengthPie-this.addLength;//饼图外环半径减空隙
+                    let sh_max=this.$d3.max(classDic[nodes[i].id].shang);
+                    let sh_min=this.$d3.min(classDic[nodes[i].id].shang);
+                    let sh_scale=this.$d3.scaleLinear().domain([sh_max,sh_min]).range([2,10])
+                    let pieData=[];
+                    let shangcha=[];
+                    //熵的差正值和负值分别做比例尺
+                    let chafu=[];
+                    let chazheng=[];
+                    for(let j=0;j<classDic[nodes[i].id].shang.length;j++){
+                        pieData.push(sh_scale(classDic[nodes[i].id].shang[j]));
+                        shangcha.push(classDic[nodes[i].id].shang[j]-this.getTreeRoot.shang[j]);
+                        if(shangcha[j]>0){
+                            chazheng.push(shangcha[j]);
+                        }
+                        else if(shangcha[j]<0){
+                            chafu.push(shangcha[j]);
+                        }
+                    }
+                    let fusacle=null;
+                    let zhangscale=null;
+                    if(chafu.length>0){
+                        let fumax=0;
+                        let fumin=this.$d3.min(chafu);
+                        fusacle=this.$d3.scaleLinear().domain([fumax,fumin]).range([0,maxLengthPie/2]);
+                    }
+                    if(chazheng.length>0){
+                        let zhengmin=0;
+                        let zhengmax=this.$d3.max(chazheng);
+                        zhangscale=this.$d3.scaleLinear().domain([zhengmin,zhengmax]).range([0,maxLengthPie/2/2]);
+                    }
 
-                //花心
-                g.append("circle")
-                .attr("cx",nodes[i].x)
-                .attr("cy",nodes[i].y)
-                .attr("r",r_scale(classDic[nodes[i].id].num))
-                .attr("fill",this.interpolateColor(c_scale(classDic[nodes[i].id].midu)))
-                .attr("stroke",this.circle_Stroke_Width)
-                .attr("stroke-width",this.circle_Stroke)
-                .attr("id",()=>"flower"+nodes[i].id)
-                .attr("class","flowerAndPie")
-                .attr("opacity",1)
-                .on("click",()=>{
-                    //选中该类，更新store.clickClass
-                    // if(this.canClick==1){
-                    //     this.$store.dispatch('updateClickClass',classDic[nodes[i].id]);
-                    // }
-                    this.clickEvent(classDic[nodes[i].id]);
-                })
-                // .call(this.$d3.drag()
-                //     .on("drag",draged.bind(this,nodes[i].id)))
+                    // //扇形高度比例尺
+                    // let sc_max=this.$d3.max(shangcha);
+                    // let sc_min=this.$d3.min(shangcha);
+                    // let sc_scale=this.$d3.scaleLinear().domain([sc_max,sc_min]).range([outerRadiusMax/3,outerRadiusMax]);
+                    let gs = g.selectAll('g')
+                    .data(pie(pieData))
+                    .enter()
+                    .append('g')
+                    .attr("id",(d,j)=>"pie"+j+"_"+nodes[i].id)
+                    .attr("class","pie")
+                    .attr("opacity",1)
+                    .attr('transform', `translate(${nodes[i].x},${nodes[i].y})`)
+                    
+                    // 绘制扇形
+                    gs.append('path')
+                    .attr('d', function (d,k) {
+                        //熵对应不同的正负比例尺
+                        let arc_generator=null;
+                        if(shangcha[k]>0){
+                            arc_generator = this.$d3.arc()
+                            .innerRadius(innerRadius)
+                            .outerRadius(maxLengthPie/2-zhangscale(shangcha[k]));
+
+                        }
+                        else if(shangcha[k]<0){
+                            arc_generator = this.$d3.arc()
+                            .innerRadius(innerRadius)
+                            .outerRadius(maxLengthPie/2+fusacle(shangcha[k]));
+                        }
+                        else{
+                            arc_generator = this.$d3.arc()
+                            .innerRadius(innerRadius)
+                            .outerRadius(maxLengthPie/2);
+                        }
+                        return arc_generator(d);
+
+                    }.bind(this))
+                    .attr('fill', (d,j)=> {
+                        return this.color[j];   // 设置颜色
+                    })
+                    .on("click",(d,j)=>{
+                        console.log(j)
+                        this.clickEvent(classDic[nodes[i].id]);
+                    })
+                     //初始熵界限
+                    g.append('circle').attr("cx",nodes[i].x)
+                    .attr("cy",nodes[i].y).attr('fill',"white").attr("r",maxLengthPie/2)
+                    .attr("stroke-width",this.pie_Middle_Circle_Stroke_Width).attr("stroke",this.pie_Middle_Circle_Stroke)
+                    .attr("fill-opacity",0)
+                    .attr("stroke-dasharray",'5 5')
+
+                    //花心
+                    g.append("circle")
+                    .attr("cx",nodes[i].x)
+                    .attr("cy",nodes[i].y)
+                    .attr("r",r_scale(classDic[nodes[i].id].num))
+                    .attr("fill",this.interpolateColor(c_scale(classDic[nodes[i].id].midu)))
+                    .attr("stroke",this.circle_Stroke_Width)
+                    .attr("stroke-width",this.circle_Stroke)
+                    .attr("id",()=>"flower"+nodes[i].id)
+                    .attr("class","flowerAndPie")
+                    .attr("opacity",1)
+                    .on("click",()=>{
+                        //选中该类，更新store.clickClass
+                        // if(this.canClick==1){
+                        //     this.$store.dispatch('updateClickClass',classDic[nodes[i].id]);
+                        // }
+                        this.clickEvent(classDic[nodes[i].id]);
+                    })
+                    // .call(this.$d3.drag()
+                    //     .on("drag",draged.bind(this,nodes[i].id)))
+                }
+                else{
+                    g.append("circle")
+                    .attr("cx",nodes[i].x)
+                    .attr("cy",nodes[i].y)
+                    .attr("r",this.san_R)
+                    .attr("fill",this.san_Fill)
+                    .attr("stroke",this.san_Stroke)
+                    .attr("stroke-width",this.san_Stroke_Width)
+                    .attr("id",()=>"flower"+nodes[i].id)
+                    .attr("class","san")
+                    .attr("opacity",1)
+                }
+                
             }
-            // function draged(id){
-            //     this.$d3.select("#flower"+id).attr("cx",this.$d3.event.x).attr("cy",this.$d3.event.y);
-            //     this.$d3.selectAll(".flowerPts"+id).attr("d",(d,i)=>{
-            //         let path1=this.getPetal(nodesDic[id],x_scale,y_scale,l_scale,this.$d3.event.x,this.$d3.event.y)[i];
-            //         return linePt(path1);
-            //     })
-            // }
             //画colorbar
             //定义一个线性渐变
             var defs = svg.append("defs");
@@ -571,6 +623,7 @@ export default {
         },
         //力布局
         forceLayout(isInit){//isInit 是否是初始化 bool
+        console.log("开始布局")
             let edgeArr=[];
             //向后台请求类之间的连接
             this.$axios.post('http://localhost:5000/classLink/findClassLink',{
@@ -583,48 +636,41 @@ export default {
                 edgeArr=res.data;
                 // edgeArr=[];
                 //对点数组处理
-                let r_max=this.$d3.max(this.getClassNames,d=>d.num);
-                let r_min=this.$d3.min(this.getClassNames,d=>d.num);
+                let bigClass=[];
+                for(let i=0;i<this.getClassNames.length;i++){
+                    if(this.getClassNames[i].ifsan==0){
+                        bigClass.push(this.getClassNames[i]);
+                    }
+                }
+                let r_max=this.$d3.max(bigClass,d=>d.num);
+                let r_min=this.$d3.min(bigClass,d=>d.num);
                 //饼图半径比例尺
                 let pie_r_scale=this.$d3.scaleLinear().domain([r_min,r_max]).range([this.pie_R_Min,this.pie_R_Max]);
                 var nodesid = [];
-                // for (let i = 0; i < this.getNotBottomClass.length; i++) {
-                //     nodesid.push({
-                //         id: String(this.getNotBottomClass[i].name),
-                //         rx: pie_r_scale(this.getNotBottomClass[i].num),
-                //         ry:pie_r_scale(this.getNotBottomClass[i].num),
-                //         children:this.getNotBottomClass[i].children,
-                //         contain:this.getNotBottomClass[i].ids,
-                //         parent:this.getNotBottomClass[i].parent,
-                //         midu:this.getNotBottomClass[i].midu,
-                //         num:this.getNotBottomClass[i].num,
-                //         shang:this.getNotBottomClass[i].shang,
-                //     })
-                // }
+                //取出散点
                 for (let i = 0; i < this.getClassNames.length; i++) {
-                    nodesid.push({
-                        id: String(this.getClassNames[i].name),
-                        rx: pie_r_scale(this.getClassNames[i].num),
-                        ry:pie_r_scale(this.getClassNames[i].num),
-                        children:this.getClassNames[i].children,
-                        contain:this.getClassNames[i].ids,
-                        parent:this.getClassNames[i].parent,
-                        midu:this.getClassNames[i].midu,
-                        num:this.getClassNames[i].num,
-                        shang:this.getClassNames[i].shang,
-                    })
-                }
-                let nodesid2=[];//最底层散点
-                for(let i=0;i<this.getBottomClass.length;i++){
-                    for(let j=0;j<this.getBottomClass[i].ids.length;j++){
-                        nodesid2.push({
-                            id:String(this.getBottomClass[i].ids[j]),
-                            rx:this.san_R,
-                            ry:this.san_R,
-                            num:1,
-                            shang:0,
-                            midu:0
+                    if(this.getClassNames[i].ifsan==0){
+                        nodesid.push({
+                            id: String(this.getClassNames[i].name),
+                            rx: pie_r_scale(this.getClassNames[i].num),
+                            ry:pie_r_scale(this.getClassNames[i].num),
+                            children:this.getClassNames[i].children,
+                            parent:this.getClassNames[i].parent,
+                            midu:this.getClassNames[i].midu,
+                            num:this.getClassNames[i].num,
+                            shang:this.getClassNames[i].shang,
+                            ifsan:0
                         })
+                    }
+                    else{
+                        for(let j=0;j<this.getClassNames[i].ids.length;j++){
+                            nodesid.push({
+                                id: String(this.getClassNames[i].ids[j]),
+                                rx: 2,
+                                ry:2,
+                                ifsan:1,
+                            })
+                        }
                     }
                     
                 }
@@ -634,13 +680,13 @@ export default {
                     links.push({
                         source: String(edgeArr[i].source),
                         target: String(edgeArr[i].target),
-                        value:edgeArr[i].value,
+                        value:parseInt(edgeArr[i].value),
                     })
                 }
                 let v_max=this.$d3.max(links,d=>d.value);
                 let v_min=this.$d3.min(links,d=>d.value);
                 let v_scale=this.$d3.scaleLinear().domain([v_max,v_min]).range([100,300]);//连value越大，距离越近
-                
+                console.log(nodesid,links)
                 //布局
                 const width = this.$refs.svg.clientWidth;
                 const height = this.$refs.svg.clientHeight;
@@ -678,7 +724,8 @@ export default {
                     }
                     
                 })
-            })
+            });
+            this.$store.dispatch('updateCutFlag',false);
         },
         //根据半径和角度获得二次贝塞尔曲线控制点坐标
         P2L(r, angle){
@@ -775,6 +822,7 @@ export default {
                     
                 }
                 if(flag){
+                    this.$store.dispatch('updateCutFlag',true);
                     this.$store.dispatch('updateLastClass',lastClass);
                     this.$store.dispatch('updateClassNames',newClass);
                 }
@@ -835,8 +883,10 @@ export default {
     watch:{
         getClassNames:function(){
             // 如果是初始化则直接画
-            if(this.showType==1){
+            console.log(this.$store.getters.getCutFlag)
+            if(this.showType==1&&this.$store.getters.getCutFlag){
                 if(this.getLastClass.length==0){
+                    console.log("llll")
                     this.forceLayout(true);
                 }
                 //如果是手动切割或者目标函数切割则动画过度

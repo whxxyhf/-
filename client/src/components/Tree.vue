@@ -7,7 +7,8 @@
                 </el-checkbox-button>
             </el-checkbox-group> -->
             <input type="button" :value="value" v-for="(value,index) in attributions" :key="index" @click="updateOne(index)">
-            <input type="button" value="split">
+            <input type="button" value="Cut" @click="cut">
+            <input type="button" value="Em" style="margin-left:10px;">
         </div>
 
         <!--tree-->
@@ -89,8 +90,10 @@ export default {
             //d3树布局
             svg.selectAll("g").remove();
             svg.selectAll("path").remove();
+            svg.selectAll("rect").remove();
             var tree=this.$d3.tree().size([width,height])(this.$d3.hierarchy(this.tree));
             var g=svg.append("g").attr("transform", `translate(${this.padding.left},${this.padding.top})`);
+            this.treeNode={};
             for(let i=0;i<tree.descendants().length;i++){
                 this.treeNode[tree.descendants()[i].data.name]=tree.descendants()[i];
             }
@@ -173,12 +176,7 @@ export default {
                 return 0;
             })
             .on("click",(d)=>{
-                //更新lastClass
-                let lastClass=[];
-                for(let i=0;i<this.$store.state.classNames.length;i++){
-                    lastClass.push(this.$store.state.classNames[i]);
-                }
-                this.$store.dispatch('updateLastClass',lastClass);
+                
                 //找后代，看有没有后代在之前的分层中
                 let children=[];
                 this.findChildren(d,children);
@@ -203,11 +201,6 @@ export default {
                     }
                     //选中当前点
                     this.$d3.select("#treeNode"+d.data.name).attr("stroke",this.circle_Stroke_Choose);
-                    // this.$d3.select("#choosedPath")
-                    // .transition()
-                    // .duration(500)
-                    // .ease(this.$d3.easeLinear).attr("d",line(pathPoints));
-                    this.updateClassNames(this.chooseNode);
                 }
                 else{
                     let root=this.findRoot(d);
@@ -238,13 +231,6 @@ export default {
                         }
                         //取消祖先节点的选中状态
                         this.$d3.select("#treeNode"+root.data.name).attr("stroke",this.circle_Stroke);
-                        // this.$d3.select("#choosedPath")
-                        // .transition()
-                        // .duration(500)
-                        // .ease(this.$d3.easeLinear)
-                        // .attr("d",line(pathPoints));
-                        
-                        this.updateClassNames(this.chooseNode);
                     }
                     else{
                         alert("出错了！")
@@ -271,9 +257,11 @@ export default {
                 if(this.treeNode[i].data.ifsan==1){
                     let rectG=g.append('g').attr("id","treeNode"+this.treeNode[i].data.name);
                     let x=this.treeNode[i].parent.x;
-                    let rectWidth=8;
+                    let rectWidth=4;
                     let rectHeight=h_scale(this.treeNode[i].data.num);
                     let y=this.$refs.svg.clientHeight-rectHeight-this.padding.top*1.5;
+                    this.treeNode[i].x=x;
+                    this.treeNode[i].y=y;
                     let shang_max=this.$d3.max(this.treeNode[i].data.shang);
                     let shang_min=this.$d3.min(this.treeNode[i].data.shang);
                     let sh_scale=this.$d3.scaleLinear().domain([shang_max,shang_min]).range([1,2]);
@@ -295,6 +283,35 @@ export default {
                         .attr("width",rectWidth)
                         .attr("height",rectHeight*shang[j]/shang_sum)
                         .attr("fill",this.color[j])
+                        .on("click",()=>{
+                            let root=this.findRoot(this.treeNode[i]);
+                            // console.log("root:",root);
+                            if(root){
+                                let brothers=[];
+                                this.findBrothers(root,this.treeNode[i].depth,brothers);
+                                // console.log("brothers:",brothers);
+                                let index=0;
+                                for(let j=0;j<brothers.length;j++){
+                                    //增加选中状态
+                                    this.$d3.select("#treeNode"+brothers[j].data.name).attr("stroke",this.circle_Stroke_Choose);
+                                    index++;
+                                    if(j==0){
+                                        for(let i=0;i<this.chooseNode.length;i++){
+                                            if(this.chooseNode[i].name==root.data.name){
+                                                this.chooseNode.splice(i,1,brothers[j].data);
+                                                index=i;
+                                            }
+                                        }
+                                    }
+                                    else{
+                                        this.chooseNode.splice(index,0,brothers[j].data);
+                                    }
+                                    
+                                }
+                                //取消祖先节点的选中状态
+                                this.$d3.select("#treeNode"+root.data.name).attr("stroke",this.circle_Stroke);
+                            }
+                        })
                         y+=rectHeight*shang[j]/shang_sum;
                     }
                     
@@ -304,7 +321,7 @@ export default {
         },
         isExit(node){
             for(let j=0;j<this.chooseNode.length;j++){
-                    if(this.chooseNode[j].name==node.data.name){
+                    if(this.chooseNode[j].name==node.data.name&&this.chooseNode[j].ifsan==node.data.ifsan){
                         return true;
                     }
             }
@@ -352,6 +369,18 @@ export default {
                 }
             }
         },
+        //选择层后剪切
+        cut(){
+            this.chooseNode.push(1);
+            this.$store.dispatch('updateCutFlag',true);
+            //更新lastClass
+            let lastClass=[];
+            for(let i=0;i<this.$store.state.classNames.length;i++){
+                lastClass.push(this.$store.state.classNames[i]);
+            }
+            this.$store.dispatch('updateLastClass',lastClass);
+            this.chooseNode.pop();
+        }
     },
     watch:{
         tree:function(){
@@ -424,7 +453,10 @@ export default {
     padding:3px 5px;
     height:25px;
 }
-
+.top input:active{
+    position: relative;
+    top:1px;
+}
 .el-checkbox-button{
     width:30px;
     height:20px;

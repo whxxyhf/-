@@ -34,7 +34,6 @@ router.get('/insertTsneNodes/:id',(req,res)=>{
                         
                     })       
                 }
-                
             }
             res.send({"data":'数据插入完成！'});
         }

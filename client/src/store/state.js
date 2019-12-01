@@ -8,7 +8,7 @@ const state={
     //选择的文件
     file:"zhuanli",
     //选择的属性
-    label:"TTTTT",
+    label:"FFTFF",
     //游走类型
     type:"no",
     //保留上一次选择的层次
@@ -23,5 +23,7 @@ const state={
     notBottomClass:[],
     //树的根
     treeRoot:{},
+    //是否布局的标志
+    cutFlag:true,
 };
 export default state;

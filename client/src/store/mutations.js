@@ -21,5 +21,7 @@ const mutations={
     setNotBottomClass:(state,names)=>(state.notBottomClass=names),
     //设置树的根
     setTreeRoot:(state,root)=>(state.treeRoot=root),
+    //设置是否布局标志
+    setCutFlag:(state,flag)=>(state.cutFlag=flag),
 };
 export default mutations;

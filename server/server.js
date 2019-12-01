@@ -40,12 +40,12 @@ app.use('/',(req,res)=>{
     res.writeHead(200,{'Content-Type':'text/html;charset=UTF8'});
     res.write('<a href="http://localhost:5000/link/insertLinks/zhuanli">插入专利连接数据</a><br/>');
     res.write('<a href="http://localhost:5000/tsne/insertTsneNodes/zhuanli">插入专利tsne数据</a><br/>');
-    res.write('<a href="http://localhost:5000/classLink/insertClassLinks/zhuanli">插入专利类连接数据</a><br/>');
+    // res.write('<a href="http://localhost:5000/classLink/insertClassLinks/zhuanli">插入专利类连接数据</a><br/>');
     res.write('<a href="http://localhost:5000/force/forceLayout/zhuanli">插入专利原始布局点坐标数据</a><br/><br/><br/>')
 
     res.write('<a href="http://localhost:5000/link/insertLinks/weibo">插入微博连接数据</a><br/>');
     res.write('<a href="http://localhost:5000/tsne/insertTsneNodes/weibo">插入微博tsne数据</a><br/>');
-    res.write('<a href="http://localhost:5000/classLink/insertClassLinks/weibo">插入微博类连接数据</a><br/>');
+    // res.write('<a href="http://localhost:5000/classLink/insertClassLinks/weibo">插入微博类连接数据</a><br/>');
     res.write('<a href="http://localhost:5000/force/forceLayout/weibo">插入微博原始布局点坐标数据</a><br/><br/><br/>')
     res.end();
 })

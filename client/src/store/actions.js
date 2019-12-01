@@ -42,6 +42,10 @@ const actions={
     //更新树的根节点
     updateTreeRoot({commit},root){
         commit('setTreeRoot',root);
+    },
+    //更新布局标志
+    updateCutFlag({commit},flag){
+        commit('setCutFlag',flag);
     }
 };
 export default actions;

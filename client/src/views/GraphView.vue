@@ -77,7 +77,7 @@ export default {
     data(){
         return {
             titleHeight:this.$store.state.titleHeight,
-            walkMethod:"deepwalk",
+            walkMethod:"no",
             showType:0,//显示力导图类型
             nodes:{},//储存原始网络力导图点坐标数据
             links:[],//储存原始网络力链接数据
@@ -194,12 +194,14 @@ export default {
             this.updateLastClass([]);
             this.updateClassNames([]);
             this.getTsneData();
+            this.$store.dispatch('updateCutFlag',true);
             this.getTree();
         },
         getType:function(){
             this.updateLastClass([]);
             this.updateClassNames([]);
             this.getTsneData();
+            this.$store.dispatch('updateCutFlag',true);
             this.getTree();
         }
         //type 或者label发生变化需要做的事情

@@ -32,13 +32,19 @@
             </div>
 
             <div class="right">
-                <el-checkbox-group v-model="initAtrrrs" :id="'input_'+index"  style="margin:0 10%"
-                v-for="(value,index) in attributions" :key="index" :fill="color[index]" :text-color="color[index]">
-                    <el-checkbox :label="value" @change="updateTypeOne(index)">{{value}}</el-checkbox><br/>
-                    <!-- <div style="height:2px;width:100%;"></div> -->
-                </el-checkbox-group>
-                <!-- <el-button size="mini" @click="updateType">OK</el-button> -->
-                <input type="button" value="Confirm" @click="updateType" class="confirm" id="confirm">
+                <div class="r_f">
+                    <el-checkbox-group v-model="initAtrrrs" :id="'input_'+index"  
+                        v-for="(value,index) in attributions" :key="index" :fill="color[index]" :text-color="color[index]">
+                        <el-checkbox :label="value" @change="updateTypeOne(index)">{{value}}</el-checkbox><br/>
+                        <!-- <div style="height:2px;width:100%;"></div> -->
+                    </el-checkbox-group>
+                    <!-- <el-button size="mini" @click="updateType">OK</el-button> -->
+                    <input type="button" value="Confirm" @click="updateType" class="confirm" id="confirm">
+                </div>
+                <div class="r_r" ref="R_R">
+                    <!-- <div v-for="(value,index) in attributions" :key="index" 
+                    :style="{height:'100%/'+rootShang.length,width:setDivWidth(rootShang[index]),fill:color[index]}"></div> -->
+                </div>
             </div>
         </div>
     </div>
@@ -58,6 +64,20 @@ export default {
             trainStep:5,
             jumpRate:0.5,
             walkEpochs:5,
+            rootShang:this.$store.getters.getTreeRoot.shang,
+        }
+    },
+    computed:{
+        setDivWidth(){
+            return function(shang){
+                let shang_max=this.$d3.max(shang);
+                let shang_min=this.$d3.min(shang);
+                let width=this.$refs.R_R.clientWidth;
+                let width_min=width/3;
+                let width_max=width-10;
+                let shang_scale=this.$d3.scaleLinear().domian([shang_max,shang_min]).range([width_min,width_max]);
+                return shang_scale(shang)
+            }
         }
     },
     methods:{
@@ -129,6 +149,17 @@ export default {
     border:0.5px solid #409EFF;
     padding: 5px 5px;
     margin-left:5px;
+}
+.r_f{
+    width:50%;
+    height:100%;
+    float:left;
+    margin-right:5px;
+}
+.r_r{
+    width:calc(50% - 5px);
+    height:100%;
+    float:left;
 }
 .sliderBox{
     width:100%;
@@ -219,9 +250,6 @@ background: #FF3030;
 /deep/ #input_0 .el-checkbox__input.is-checked+.el-checkbox__label{
     color:#000000;
 }
-/deep/ #input_0 .el-checkbox__input+.el-checkbox__label{
-    margin-left:20px;
-}
 
 
 /deep/ #input_1 .el-checkbox__input.is-checked .el-checkbox__inner {
@@ -236,9 +264,6 @@ background: #FF00FF;
 }
 /deep/ #input_1 .el-checkbox__input.is-checked+.el-checkbox__label{
     color:#000000;
-}
-/deep/ #input_1 .el-checkbox__input+.el-checkbox__label{
-    margin-left:20px;
 }
 
 
@@ -255,9 +280,6 @@ background: #C0FF3E;
 /deep/ #input_2 .el-checkbox__input.is-checked+.el-checkbox__label{
     color:#000;
 }
-/deep/ #input_2 .el-checkbox__input+.el-checkbox__label{
-    margin-left:20px;
-}
 
 /deep/ #input_3 .el-checkbox__input.is-checked .el-checkbox__inner {
 background-color: #fff;
@@ -271,9 +293,6 @@ background: #87CEFA;
 }
 /deep/ #input_3 .el-checkbox__input.is-checked+.el-checkbox__label{
     color:#000;
-}
-/deep/ #input_3 .el-checkbox__input+.el-checkbox__label{
-    margin-left:20px;
 }
 
 
@@ -289,9 +308,6 @@ background: #FFC0CB;
 }
 /deep/ #input_4 .el-checkbox__input.is-checked+.el-checkbox__label{
     color:#000;
-}
-/deep/ #input_4 .el-checkbox__input+.el-checkbox__label{
-    margin-left:20px;
 }
 
 </style>
