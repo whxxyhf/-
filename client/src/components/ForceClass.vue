@@ -15,7 +15,7 @@
 <script>
 import {mapGetters} from 'vuex';
 import * as d3Force from 'd3-ellipse-force';
-// import ForceEdgeBundling from '../../public/js/d3-ForceEdgeBundling';
+import ForceEdgeBundling from '../../public/js/d3-ForceEdgeBundling';
 export default {
     name:"ForceClass",
     props:['showType'],
@@ -54,10 +54,10 @@ export default {
             pie_Middle_Circle_Stroke:'#ccc',
 
             canClick:0,//0,1,2,3分别表示没有点击，选中，切割，切割到底
-            san_R:3,
-            san_Fill:'#ccc',
-            san_Stroke_Width:1.5,
-            san_Stroke:"blue"
+            san_R:1,
+            san_Fill:'steelblue',
+            san_Stroke_Width:0.01,
+            san_Stroke:"steelblue"
             
         }
     },
@@ -67,7 +67,7 @@ export default {
     },
     methods:{
         //画图
-        draw(nodes,links,EdgeBundling){
+        draw(nodes,nodes2,links,EdgeBundling){//nodes:类布局的点 nodes2:散点布局的点 links:混合边 EdgeBundling：是否边绑定
             // console.log("nodes:",nodes)
             // console.log("links:",links)
             let lastClass=[];
@@ -93,8 +93,32 @@ export default {
             let c_scale=this.$d3.scaleLinear().domain([c_min,c_max]).range([0,1]);
             //nodes数组转字典
             let nodesDic={};
+            let node2Dic={};
+            for(let i=0;i<nodes2.length;i++){
+                node2Dic[nodes2[i].id]={x:nodes2[i].x,y:nodes2[i].y};
+            }
             for(let i=0;i<nodes.length;i++){
                 nodesDic[nodes[i].id]={x:nodes[i].x,y:nodes[i].y};
+                if(nodes[i].ifsan==1){
+                    let parentX=nodes[i].x;
+                    let parentY=nodes[i].y;
+                    let parentR=pie_r_scale(nodes[i].num)*1.5;
+                    let xarr=[];
+                    let yarr=[];
+                    for(let j=0;j<nodes[i].ids.length;j++){
+                        xarr.push(node2Dic[nodes[i].ids[j]].x);
+                        yarr.push(node2Dic[nodes[i].ids[j]].y);
+                    }
+                    let x_max=this.$d3.max(xarr);
+                    let x_min=this.$d3.min(xarr);
+                    let y_max=this.$d3.max(yarr);
+                    let y_min=this.$d3.min(yarr);
+                    let x_Scale=this.$d3.scaleLinear().domain([x_min,x_max]).range([parentX-parentR,parentX+parentR]);
+                    let y_Scale=this.$d3.scaleLinear().domain([y_min,y_max]).range([parentY-parentR,parentY+parentR]);
+                    for(let j=0;j<nodes[i].ids.length;j++){
+                        nodesDic[nodes[i].ids[j]]={x:x_Scale(node2Dic[nodes[i].ids[j]].x),y:y_Scale(node2Dic[nodes[i].ids[j]].y)};
+                    }
+                }
             }
             //画线
             let link=svg.append("g").attr("class","linkG");
@@ -103,8 +127,8 @@ export default {
                         .x(d=>d[0])
                         .y(d=>d[1])
                 //连线宽度比例尺
-                let v_max=this.$d3.max(links,d=>d.value);
-                let v_min=this.$d3.min(links,d=>d.value);
+                let v_max=this.$d3.max(links,d=>parseInt(d.value));
+                let v_min=this.$d3.min(links,d=>parseInt(d.value));
                 let w_scale=this.$d3.scaleLinear().domain([v_min,v_max]).range([this.path_Stroke_Width_Min,this.path_Stroke_Width_Max]);
                 //连线不透明度比例尺
                 let o_scale=this.$d3.scaleLinear().domain([v_min,v_max]).range([this.path_Opacity_Min,this.path_Opacity_Max]);
@@ -121,23 +145,28 @@ export default {
                     let point=[[s_x,s_y],[t_x,t_y]];
                     
                     link.append("path")
-                        .attr('d',line(point))
-                        .attr("fill",this.path_Fill)
-                        .attr("stroke-width",w_scale(links[i].value))
-                        .attr("stroke-opacity",o_scale(links[i].value))
-                        .attr("stroke",this.path_Stroke)
+                    .attr('d',line(point))
+                    .attr("fill",this.path_Fill)
+                    .attr("stroke-width",w_scale(parseInt(links[i].value)))
+                    .attr("stroke-opacity",o_scale(parseInt(links[i].value)))
+                    .attr("stroke",this.path_Stroke)
                 }
             }
             //边绑定
             else{
+                var fbundling = ForceEdgeBundling()
+                    .step_size(10)
+                    .compatibility_threshold(0.9)
+                    .nodes(nodesDic)
+                    .edges(links);
+                    var results = fbundling();
                 let line=this.$d3.line()
                         .x(d=>d.x)
                         .y(d=>d.y)
-                links.forEach((edge_subpoint_data)=>{	
-        
+                results.forEach((edge_subpoint_data)=>{	
                     link.append("path")
                     .attr("d", line(edge_subpoint_data))
-                        .attr("stroke-width", 1)
+                        .attr("stroke-width", 2)
                         .attr("stroke",this.path_Stroke)
                         .attr("fill", "none")
                         .attr('stroke-opacity',.3); //use opacity as blending
@@ -268,18 +297,17 @@ export default {
                     //     .on("drag",draged.bind(this,nodes[i].id)))
                 }
                 else{
-                    g.append("circle")
-                    .attr("cx",nodes[i].x)
-                    .attr("cy",nodes[i].y)
-                    .attr("r",this.san_R)
-                    .attr("fill",this.san_Fill)
-                    .attr("stroke",this.san_Stroke)
-                    .attr("stroke-width",this.san_Stroke_Width)
-                    .attr("id",()=>"flower"+nodes[i].id)
-                    .attr("class","san")
-                    .attr("opacity",1)
+                    for(let j=0;j<nodes[i].ids.length;j++){
+                        g.append("circle")
+                        .attr("cx",nodesDic[nodes[i].ids[j]].x)
+                        .attr("cy",nodesDic[nodes[i].ids[j]].y)
+                        .attr("r",this.san_R)
+                        .attr("fill",this.san_Fill)
+                        .attr("id",()=>"flower"+nodes[i].ids[j])
+                        .attr("class","san")
+                        .attr("opacity",1)
+                    }
                 }
-                
             }
             //画colorbar
             //定义一个线性渐变
@@ -307,6 +335,20 @@ export default {
             svg.append("text").attr("x",width-this.colorBarWidth-20).attr('y',20).attr("font-size",10).text("Central density");
             svg.append("text").attr("x",width-this.colorBarWidth-50).attr('y',this.colorBarHeight+20).attr("font-size",10).text("low");
             svg.append("text").attr("x",width-25).attr('y',this.colorBarHeight+20).attr("font-size",10).text("high");
+            let rootSang=this.getTreeRoot.shang;
+            let rootShangRectHeight=20;
+            let rootShangRectWidthMax=100;
+            let rootshang_max=this.$d3.max(rootSang);
+            let rootshang_min=this.$d3.min(rootSang);
+            let rootshang_scale=this.$d3.scaleLinear().domain([rootshang_max,rootshang_min]).range([rootShangRectWidthMax/3,rootShangRectWidthMax]);
+            for(let i=0;i<rootSang.length;i++){
+                svg.append('rect')
+                .attr("x",width-rootShangRectWidthMax-30)
+                .attr("y",this.colorBarHeight+25+5+(rootShangRectHeight+5)*i)
+                .attr("width",rootshang_scale(rootSang[i]))
+                .attr("height",rootShangRectHeight)
+                .attr("fill",this.color[i]);
+            }
         },
 
         transition(nodes,links){
@@ -624,7 +666,9 @@ export default {
         //力布局
         forceLayout(isInit){//isInit 是否是初始化 bool
         console.log("开始布局")
-            let edgeArr=[];
+            let edge1=[];
+            let edge2=[];
+            let edge3=[];
             //向后台请求类之间的连接
             this.$axios.post('http://localhost:5000/classLink/findClassLink',{
                 classes:this.getClassNames,
@@ -633,24 +677,19 @@ export default {
                 file:this.getFile,
             })
             .then((res)=>{
-                edgeArr=res.data;
-                // edgeArr=[];
-                //对点数组处理
-                let bigClass=[];
-                for(let i=0;i<this.getClassNames.length;i++){
-                    if(this.getClassNames[i].ifsan==0){
-                        bigClass.push(this.getClassNames[i]);
-                    }
-                }
-                let r_max=this.$d3.max(bigClass,d=>d.num);
-                let r_min=this.$d3.min(bigClass,d=>d.num);
+                edge1=res.data[0];
+                edge2=res.data[1];
+                edge3=res.data[2];
+                let nodes1=[];//类
+                let nodes2=[];//散点
+
+                let r_max=this.$d3.max(this.getClassNames,d=>d.num);
+                let r_min=this.$d3.min(this.getClassNames,d=>d.num);
                 //饼图半径比例尺
                 let pie_r_scale=this.$d3.scaleLinear().domain([r_min,r_max]).range([this.pie_R_Min,this.pie_R_Max]);
-                var nodesid = [];
                 //取出散点
                 for (let i = 0; i < this.getClassNames.length; i++) {
-                    if(this.getClassNames[i].ifsan==0){
-                        nodesid.push({
+                    let n={
                             id: String(this.getClassNames[i].name),
                             rx: pie_r_scale(this.getClassNames[i].num),
                             ry:pie_r_scale(this.getClassNames[i].num),
@@ -659,69 +698,82 @@ export default {
                             midu:this.getClassNames[i].midu,
                             num:this.getClassNames[i].num,
                             shang:this.getClassNames[i].shang,
-                            ifsan:0
-                        })
-                    }
-                    else{
+                            ifsan:this.getClassNames[i].ifsan,
+                        };
+                    if(this.getClassNames[i].ifsan==1){
+                        n.ids=this.getClassNames[i].ids;
                         for(let j=0;j<this.getClassNames[i].ids.length;j++){
-                            nodesid.push({
+                            nodes2.push({
                                 id: String(this.getClassNames[i].ids[j]),
                                 rx: 2,
                                 ry:2,
+                                num:1,
                                 ifsan:1,
-                            })
+                            });
                         }
                     }
-                    
+                    nodes1.push(n);
+
                 }
                 //对边数组处理
-                var links = [];
-                for (let i = 0; i < edgeArr.length; i++) {
+                let links = [];
+                let links2=[];
+                let links3=[];
+                for (let i = 0; i < edge1.length; i++) {
                     links.push({
-                        source: String(edgeArr[i].source),
-                        target: String(edgeArr[i].target),
-                        value:parseInt(edgeArr[i].value),
+                        source: String(edge1[i].source),
+                        target: String(edge1[i].target),
+                        value:parseInt(edge1[i].value),
+                    })
+                }
+                for (let i = 0; i < edge2.length; i++) {
+                    links2.push({
+                        source: String(edge2[i].source),
+                        target: String(edge2[i].target),
+                        value:parseInt(edge2[i].value),
+                    })
+                }
+                for (let i = 0; i < edge3.length; i++) {
+                    links3.push({
+                        source: String(edge3[i].source),
+                        target: String(edge3[i].target),
+                        value:parseInt(edge3[i].value),
                     })
                 }
                 let v_max=this.$d3.max(links,d=>d.value);
                 let v_min=this.$d3.min(links,d=>d.value);
                 let v_scale=this.$d3.scaleLinear().domain([v_max,v_min]).range([100,300]);//连value越大，距离越近
-                console.log(nodesid,links)
-                //布局
+                //大类布局
                 const width = this.$refs.svg.clientWidth;
                 const height = this.$refs.svg.clientHeight;
-                var simulation=this.$d3.forceSimulation(nodesid);
+                // console.log(edge1)
+                var simulation=this.$d3.forceSimulation(nodes1);
                 simulation 
                 .force("link", this.$d3.forceLink(links).distance(d=>v_scale(d.value)).id(d => d.id))//
                 .force("collide", d3Force.ellipseForce())
                 .force("charge", this.$d3.forceManyBody())
                 .force("center", this.$d3.forceCenter(width / 2, height / 2))
-                .on('tick', function () {
-                    // console.log("waiting...");
-                })
                 .on("end",()=>{
-                    console.log("布局结束");
-                    // let nodesDic={};
-                    // for(let i=0;i<nodesid.length;i++){
-                    //     nodesDic[nodesid[i].id]={x:nodesid[i].x,y:nodesid[i].y};
-                    // }
-                    // var fbundling = ForceEdgeBundling()
-                    // .step_size(10)
-                    // .compatibility_threshold(0.9)
-                    // .nodes(nodesDic)
-                    // .edges(edgeArr);
-                    // var results = fbundling();
-                    // console.log(results)
-                    //如果是初始化直接画图
-                    if(isInit){
-                        // this.draw(nodesid,results,true);
-                        this.draw(nodesid,edgeArr,false);
-                    }
-                    //否则动画过度
-                    else{
-                        this.draw(nodesid,edgeArr,false);
-                        // this.transition(nodesid,edgeArr);
-                    }
+                    console.log("布局1结束");
+                    var simulation=this.$d3.forceSimulation(nodes2);
+                    simulation 
+                    .force("link", this.$d3.forceLink(links2).distance(100).id(d => d.id))
+                    .force("collide", d3Force.ellipseForce())
+                    .force("charge", this.$d3.forceManyBody())
+                    .force("center", this.$d3.forceCenter(width / 2, height / 2))
+                    .on("end",()=>{
+                        console.log("布局2结束");
+                        //如果是初始化直接画图
+                        if(isInit){
+                            // this.draw(nodesid,results,true);
+                            this.draw(nodes1,nodes2,edge3,true);
+                        }
+                        //否则动画过度
+                        else{
+                            this.draw(nodes1,nodes2,edge3,true);
+                            // this.transition(nodesid,edgeArr);
+                        }
+                    })
                     
                 })
             });
@@ -886,7 +938,6 @@ export default {
             console.log(this.$store.getters.getCutFlag)
             if(this.showType==1&&this.$store.getters.getCutFlag){
                 if(this.getLastClass.length==0){
-                    console.log("llll")
                     this.forceLayout(true);
                 }
                 //如果是手动切割或者目标函数切割则动画过度

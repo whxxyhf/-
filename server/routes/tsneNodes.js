@@ -17,9 +17,18 @@ router.get('/insertTsneNodes/:id',(req,res)=>{
         else{
             for(let j=0;j<filePaths.length;j++){
                 let path=filePaths[j];
-                let words=path.split("_");
-                let label=words[0];
-                let type=words[2].split('.')[0];
+                let words;
+                let label;
+                let type;
+                if(path=='deepwalk.csv'){
+                    label="TTTTT";
+                    type="deepwalk";
+                }
+                else{
+                    words=path.split("_");
+                    label=words[0];
+                    type=words[2].split('.')[0];
+                }
                 let data=fs.readFileSync(dir+"/"+path);
                 if(req.params.id=='zhuanli'){
                     fun.ConvertToTable(data, function (table) {
@@ -54,6 +63,9 @@ router.post('/findAllLocation',(req,res)=>{
         top:10,
         bottom:10
     };
+    if(type=="deepwalk"){
+        label="TTTTT";
+    }
     
     TsneNode.find({label:label,type:type,file:file},{name:1,x:1,y:1})
     .then((nodes)=>{
@@ -81,8 +93,35 @@ router.post('/findAllAttr',(req,res)=>{
     let label=req.body.label;
     let type=req.body.type;
     let file=req.body.file;
+    if(type=="deepwalk"){
+        label="TTTTT";
+    }
     
-    TsneNode.find({label:label,type:type,file:file},{name:1,attr:1})
+    TsneNode.find({label:label,type:type,file:file},{name:1,attr:1,_id:0})
+    .then((nodes)=>{
+        //  let newNodes={};
+        // for(var i=0;i<nodes.length;i++){
+        //     newNodes[nodes[i].name]={attr:nodes[i].attr};
+        // }
+
+        return res.send(nodes);
+    })
+    .catch((err)=>{
+        console.log(err);
+        return res.send({data:"查询失败"})
+    });
+})
+router.post('/findAttr',(req,res)=>{
+    let label=req.body.label;
+    let type=req.body.type;
+    let file=req.body.file;
+    let classes=req.body.class;
+    if(type=="deepwalk"){
+        label="TTTTT";
+    }
+    let ids=classes.ids;
+       
+    TsneNode.find({label:label,type:type,file:file,name:{$in:ids}},{name:1,attr:1,_id:0})
     .then((nodes)=>{
         //  let newNodes={};
         // for(var i=0;i<nodes.length;i++){
@@ -102,6 +141,9 @@ router.post('/findCount',(req,res)=>{
     let label=req.body.label;
     let type=req.body.type;
     let file=req.body.file;
+    if(type=="deepwalk"){
+        label="TTTTT";
+    }
     
     TsneNode.countDocuments({label:label,type:type,file:file})
     .then((count)=>{

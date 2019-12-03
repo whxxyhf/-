@@ -7,7 +7,13 @@ router.post('/findTree',(req,res)=>{
     let label=req.body.label;
     let type=req.body.type;
     let file=req.body.file;
-    let fileName=`./public/${file}/treeData/${label}_5201.0_${type}_t.json`;
+    let fileName;
+    if(type=="deepwalk"){
+        fileName=`./public/${file}/treeData/deepwalk_t.json`;
+    }
+    else{
+        fileName=`./public/${file}/treeData/${label}_5201.0_${type}_t.json`;
+    }
     fs.readFile(fileName,(err,data)=>{
         
         if(err) console.log(err)

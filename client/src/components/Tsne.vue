@@ -31,6 +31,7 @@ export default {
             path_Stroke_Width:1.5,
             path_Stroke_Opacity:.7,
             path_Fill_Opacity:.1,
+            path_Fill_Choosed:"#FF00FF",
             isFirst:true,
         }
     },
@@ -96,8 +97,8 @@ export default {
         },
         //监听点击某个类
         getClickClass:function(){
-            this.$d3.selectAll('.polygo').attr("stroke",this.path_Stroke);
-            this.$d3.select('#polygo'+this.getClickClass.name).attr("stroke",this.path_Stroke_Choosed);
+            this.$d3.selectAll('.polygo').attr("stroke",this.path_Stroke).attr("fill",this.path_Fill);
+            this.$d3.select('#polygo'+this.getClickClass.name).attr("stroke",this.path_Stroke_Choosed).attr("fill",this.path_Fill_Choosed);
         }
     }
     

@@ -32,7 +32,7 @@
             </div>
 
             <div class="right">
-                <div class="r_f">
+                <!-- <div class="r_f"> -->
                     <el-checkbox-group v-model="initAtrrrs" :id="'input_'+index"  
                         v-for="(value,index) in attributions" :key="index" :fill="color[index]" :text-color="color[index]">
                         <el-checkbox :label="value" @change="updateTypeOne(index)">{{value}}</el-checkbox><br/>
@@ -40,11 +40,11 @@
                     </el-checkbox-group>
                     <!-- <el-button size="mini" @click="updateType">OK</el-button> -->
                     <input type="button" value="Confirm" @click="updateType" class="confirm" id="confirm">
-                </div>
-                <div class="r_r" ref="R_R">
-                    <!-- <div v-for="(value,index) in attributions" :key="index" 
-                    :style="{height:'100%/'+rootShang.length,width:setDivWidth(rootShang[index]),fill:color[index]}"></div> -->
-                </div>
+                <!-- </div> -->
+                <!-- <div class="r_r" ref="R_R">
+                    <div v-for="(value,index) in attributions" :key="index" 
+                    :style="{height:'20%',width:setDivWidth(rootShang[index]),fill:color[index]}"></div>
+                </div> -->
             </div>
         </div>
     </div>
@@ -72,10 +72,10 @@ export default {
             return function(shang){
                 let shang_max=this.$d3.max(shang);
                 let shang_min=this.$d3.min(shang);
-                let width=this.$refs.R_R.clientWidth;
+                let width=100//this.$refs.R_R.clientWidth;
                 let width_min=width/3;
                 let width_max=width-10;
-                let shang_scale=this.$d3.scaleLinear().domian([shang_max,shang_min]).range([width_min,width_max]);
+                let shang_scale=this.$d3.scaleLinear().domain([shang_max,shang_min]).range([width_min,width_max]);
                 return shang_scale(shang)
             }
         }

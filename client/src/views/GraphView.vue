@@ -131,6 +131,7 @@ export default {
             })
             .then((res)=>{
                 let names=[];
+                this.$store.dispatch('updateCutFlag',true);
                 this.getChildren(res.data,0,3,names);
                 this.updateClassNames(names);
                 let tree=res.data;
@@ -194,19 +195,17 @@ export default {
             this.updateLastClass([]);
             this.updateClassNames([]);
             this.getTsneData();
-            this.$store.dispatch('updateCutFlag',true);
             this.getTree();
         },
         getType:function(){
             this.updateLastClass([]);
             this.updateClassNames([]);
             this.getTsneData();
-            this.$store.dispatch('updateCutFlag',true);
             this.getTree();
         }
         //type 或者label发生变化需要做的事情
             //重新获取tsneData,treeData
-            //清空classNames,并重新默认一层
+            //清空classNames并重新默认一层
             //清空上一次选择的层
     }
 }

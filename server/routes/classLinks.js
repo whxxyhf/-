@@ -80,12 +80,16 @@ router.post('/findClassLink',(req,res)=>{
     let type=req.body.type;
     let file=req.body.file;
     let classes=req.body.classes;
-    let edges=[];
+    let edges1=[];//类连接
+    let edges2=[];//散点连接
+    let edges3=[];//混合连接
+    let lei=[];
     let names=[];
     let san=[];
     for(let i=0;i<classes.length;i++){
+        lei.push(classes[i].name);
         if(classes[i].ifsan==0){
-            names.push(classes[i].name.trim());
+            names.push(classes[i].name);
         }
         else{
             for(let j=0;j<classes[i].ids.length;j++){
@@ -95,7 +99,13 @@ router.post('/findClassLink',(req,res)=>{
         }
     }
     let dir=`./public/${file}/classLinkData`;
-    let path=dir+`/${label}_5201.0_${type}_l.json`;
+    let path;
+    if(type=="deepwalk"){
+        path="deepwal_l.json";
+    }
+    else{
+        path=dir+`/${label}_5201.0_${type}_l.json`;
+    }
     fs.readFile(path,(err,data)=>{
         if(err){
             console.log(err);
@@ -106,17 +116,21 @@ router.post('/findClassLink',(req,res)=>{
             .then((links_o)=>{
                 let link=JSON.parse(data).links;
                 for(let i=0;i<link.length;i++){
-                    if(names.indexOf(link[i].source.trim())>=0&&names.indexOf(link[i].target.trim())>=0){
-                        edges.push(link[i]);
+                    if(names.indexOf(link[i].source)>=0&&names.indexOf(link[i].target)>=0&&link[i].value!=0){
+                        edges3.push(link[i]);
+                    }
+                    if(lei.indexOf(link[i].source)>=0&&lei.indexOf(link[i].target)>=0&&link[i].value!=0){
+                        edges1.push(link[i]);
                     }
                 }
                 for(let i=0;i<links_o.length;i++){
-                    if(san.indexOf(link[i].source.trim())>=0&&san.indexOf(link[i].target.trim())>=0){
+                    if(san.indexOf(links_o[i].source)>=0&&san.indexOf(links_o[i].target)>=0){
                         links_o[i].value=1;
-                        edges.push(links_o[i]);
+                        edges2.push(links_o[i]);
+                        edges3.push(links_o[i]);
                     }
                 }
-                    res.send(edges);
+                    res.send([edges1,edges2,edges3]);
                 })
             .catch((err)=>{
                 return res.send({data:"查询失败"})
