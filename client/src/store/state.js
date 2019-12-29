@@ -7,6 +7,8 @@ const state={
     tsne:{},
     //选择的文件
     file:"zhuanli",
+    //数据属性名称
+    attributions:[],
     //选择的属性
     label:"FFTFF",
     //游走类型

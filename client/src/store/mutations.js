@@ -5,6 +5,8 @@ const mutations={
     setTsne:(state,tsne)=>(state.tsne=tsne),
     //设置选择的文件
     setFile:(state,file)=>(state.file=file),
+    //设置数据的属性名称
+    setAttributions:(state,attrs)=>(state.attributions=attrs),
     //设置选择的属性
     setLabel:(state,label)=>(state.label=label),
     //设置游走的类型

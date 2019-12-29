@@ -10,6 +10,15 @@ export default {
   name:'App',
   components:{
     GraphView,
+  },
+  created(){
+    this.$axios.post('http://localhost:5000/tsne/getAttrNames',{
+                file:this.$store.getters.getFile,
+            })
+            .then((res)=>{
+              console.log(res.data)
+                this.$store.dispatch('updateAttributions',res.data);
+            })
   }
 }
 </script>

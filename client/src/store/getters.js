@@ -6,6 +6,8 @@ const getters={
     getTsne:state=>state.tsne,
     //获得选择的文件
     getFile:state=>state.file,
+    //获得数据属性名称
+    getAttributions:state=>state.attributions,
     //获得选择的属性
     getLabel:state=>state.label,
     //获得游走类型

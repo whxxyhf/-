@@ -11,6 +11,10 @@ const actions={
     updateFile({commit},file){
         commit('setFile',file);
     },
+    //更新数据属性名称
+    updateAttributions({commit},attrs){
+        commit('setAttributions',attrs);
+    },
     //更新Label
     updateLabel({commit},label){
         commit('setLabel',label);

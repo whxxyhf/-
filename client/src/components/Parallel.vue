@@ -10,9 +10,10 @@
 import {mapGetters} from 'vuex';
 export default {
     name:'Parallel',
+    props:['attrData'],
     data(){
         return {
-            attrData:[],
+            // attrData:[],
             zhou_width:2,
             path_stroke:"#ccc",
             path_stroke_width:.5,
@@ -190,8 +191,8 @@ export default {
                 }
                 for(let i=0;i<countArrDic.length;i++){
                     let count_max=this.$d3.max(countArr[i]);
-                    let count_min=this.$d3.min(countArr[i]);
-                    let width_scale=this.$d3.scaleLinear().domain([count_min,count_max]).range([0,this.gap/1.5]);
+                    // let count_min=this.$d3.min(countArr[i]);
+                    let width_scale=this.$d3.scaleLinear().domain([0,count_max]).range([0,this.gap/1.5]);
                     for(let j in countArrDic[i]){
                         let width=width_scale(countArrDic[i][j]);
                         this.$d3.select('#rect_'+i+'_'+j)
@@ -227,7 +228,7 @@ export default {
         },
     },
     mounted(){
-        this.getAttrData();
+        // this.getAttrData();
     },
     watch:{
         //获得属性数据后画图

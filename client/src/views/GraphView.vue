@@ -25,7 +25,7 @@
             <!-- 聚类力导图 -->
             <Panel :title="'Node-Link View'" ref="forcePanel" :panelHeight="'100%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;" >
                 <ForceClass v-show="showType==1" :showType="showType" slot="panelBody"/>
-                <ForceNet v-show="showType==0" :nodes="nodes" :links="links" slot="panelBody"/>
+                <ForceNet v-show="showType==0" :nodes="nodes" :links="links" :attrData="attrData" slot="panelBody"/>
                 <select v-model="showType" slot="title" style="float:right">
                     <option value="0">Original ForceLayout</option>
                     <option value="1">Mixed ForceLayout</option>
@@ -47,7 +47,7 @@
 
             <!-- 平行坐标图 -->
             <Panel :title="'Parallel View'" :panelHeight="'50%'" :panelWidth="'100%'" :titleHeight="titleHeight" style="float:left;">
-                <Parallel slot="panelBody"/>
+                <Parallel :attrData="attrData" slot="panelBody"/>
             </Panel>
         </div>
 
@@ -82,6 +82,7 @@ export default {
             nodes:{},//储存原始网络力导图点坐标数据
             links:[],//储存原始网络力链接数据
             tree:[],//储存树图数据
+            attrData:[],
         }
     },
     computed:{
@@ -180,6 +181,16 @@ export default {
         chooseWalkMethod(){
             this.$store.dispatch("updateType",this.walkMethod);
         },
+        getAttrData(){
+            this.$axios.post('http://localhost:5000/tsne/findAllAttr',{
+                label:this.getLabel,
+                type:this.getType,
+                file:this.getFile,
+            })
+            .then((res)=>{
+                this.attrData=res.data;
+            })
+        },
     },
     mounted(){
         this.getNodes();
@@ -189,6 +200,7 @@ export default {
     watch:{
         // 等力布局点的坐标获得后再获得链接数据
         nodes:function(){
+            this.getAttrData();
             this.getLinks();
         },
         getLabel:function(){

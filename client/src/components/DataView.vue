@@ -72,9 +72,9 @@ export default {
         },
     },
     mounted(){
-        this.getLinksCount();
-        this.getNodesCount();
-        this.getTsneNodesCount();
+        // this.getLinksCount();
+        // this.getNodesCount();
+        // this.getTsneNodesCount();
     }
 }
 </script>

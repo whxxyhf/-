@@ -46,7 +46,7 @@ export default {
             splitLine_Width:2,//分割线宽度
             splitLine_Stroke:"red",//分割线颜色
             color:["#FF3030","#FF00FF","#C0FF3E","#87CEFA","#FFC0CB"],
-            attributions:["year","country","people","tech","count"],
+            attributions:[],//["year","country","people","tech","count"],
             initAtrrrs:[],
             choosedAttrs:[false,false,false,false,false],//选择了哪些属性
             padding:{
@@ -58,7 +58,7 @@ export default {
         }
     },
     computed:{
-        ...mapGetters(['getClickClass','getClassNames']),
+        ...mapGetters(['getClickClass','getClassNames','getAttributions']),
     },
     methods:{
         ...mapActions(['updateClassNames']),
@@ -401,8 +401,11 @@ export default {
                         .duration(500)
                         .ease(this.$d3.easeLinear)
                         .attr("d",line(pathPoints));
+        },
+        getAttributions:function(){
+            this.attributions=this.getAttributions;
         }
-    }
+    },
     
 }
 </script>

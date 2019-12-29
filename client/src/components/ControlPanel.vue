@@ -58,7 +58,7 @@ export default {
             //初始选择的属性
             initAtrrrs:[],
             //所有的属性
-            attributions:["year","country","people","tech","count"],
+            attributions:[],//["year","country","people","tech","count"],
             color:["#FF3030","#FF00FF","#C0FF3E","#87CEFA","#FFC0CB"],
             label:[],
             trainStep:5,
@@ -78,6 +78,9 @@ export default {
                 let shang_scale=this.$d3.scaleLinear().domain([shang_max,shang_min]).range([width_min,width_max]);
                 return shang_scale(shang)
             }
+        },
+        getAttributions(){
+            return this.$store.getters.getAttributions;
         }
     },
     methods:{
@@ -94,16 +97,19 @@ export default {
             this.$store.dispatch("updateLabel",this.label.join().replace(/,/g,''));
         }
     },
-    mounted(){
-        //加载初始label
-        this.label=this.$store.state.label.split("");
-        for(let i=0;i<this.label.length;i++){
-            if(this.label[i]=="T"){
-                this.initAtrrrs.push(this.attributions[i]);
+    watch:{
+        getAttributions:function(){
+            this.attributions=this.getAttributions;
+            //加载初始label
+            this.label=this.$store.state.label.split("");
+            for(let i=0;i<this.label.length;i++){
+                if(this.label[i]=="T"){
+                    this.initAtrrrs.push(this.attributions[i]);
+                }
             }
         }
+    },
 
-    }
 }
 </script>
 

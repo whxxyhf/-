@@ -67,7 +67,7 @@ router.post('/findAllLocation',(req,res)=>{
         label="TTTTT";
     }
     
-    TsneNode.find({label:label,type:type,file:file},{name:1,x:1,y:1})
+    TsneNode.find({label:label,type:type,file:file})
     .then((nodes)=>{
         let newNodes={};
         // 将x,y根据width,height做比例映射
@@ -78,7 +78,7 @@ router.post('/findAllLocation',(req,res)=>{
         let x_scale=d3.scaleLinear().domain([x_min,x_max]).range([padding.left,width-padding.right]);
         let y_scale=d3.scaleLinear().domain([y_min,y_max]).range([height-padding.bottom,padding.top]);
         for(var i=0;i<nodes.length;i++){
-            newNodes[nodes[i].name]={'x':x_scale(nodes[i].x),'y':y_scale(nodes[i].y)};
+            newNodes[nodes[i].name]={'x':x_scale(nodes[i].x),'y':y_scale(nodes[i].y),'attr':nodes[i].attr};
         }
 
         return res.send(newNodes);
@@ -135,7 +135,21 @@ router.post('/findAttr',(req,res)=>{
         return res.send({data:"查询失败"})
     });
 })
-
+router.post('/getAttrNames',(req,res)=>{
+    let file=req.body.file;
+    TsneNode.findOne({file:file})
+    .then((node)=>{
+        let names=[];
+        for(let attr in node.attr){
+            names.push(attr);
+        }
+        return res.send(names);
+    })
+    .catch((err)=>{
+        console.log(err);
+        return res.send({data:"查询失败"})
+    });
+})
 //获取点的数量
 router.post('/findCount',(req,res)=>{
     let label=req.body.label;
